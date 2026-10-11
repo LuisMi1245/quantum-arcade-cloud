@@ -190,10 +190,11 @@ function confirmName() {
 }
 
 // --- Botón de cámara (integrado en la tarjeta del jugador) ---
+const CAMERA_NOTE = 'The video stays in your browser. Only 5 finger angles are sent to the backend, where a quantum circuit (VQC) classifies your gesture.';
 const CAMERA_UI = {
-  off: { icon: '📷', label: 'TURN ON CAMERA', hint: 'Play with your hand! Show ✊ ✋ or ✌ to the camera. Your video stays in your browser.' },
+  off: { icon: '📷', label: 'START QUANTUM CAMERA', hint: 'Play with your hand! Your browser measures 5 finger angles, then a trained quantum circuit (VQC), not a classical neural network, decides: ✊ ✋ or ✌. Your video never leaves your browser.' },
   loading: { icon: '⏳', label: 'OPENING CAMERA…', hint: 'Accept the camera permission in your browser.' },
-  on: { icon: '🟢', label: 'CAMERA ON', hint: 'Show your move and hold it still; remove your hand for the next round. Tap the button to turn it off.' },
+  on: { icon: '🟢', label: 'QUANTUM CAMERA ON', hint: 'The quantum circuit is reading your hand. Show your move and hold it still; remove your hand for the next round. Tap the button to turn it off.' },
 };
 
 function setCameraUi(state, hintOverride) {
@@ -672,7 +673,7 @@ function renderState(state) {
     $('botstate').textContent = 'ACTIVE / THINKING';
     setIntegrationDetails(agreement
       ? `Current round pact: ${moveLabel(agreement)}. Remove your hand after a move to enable the next one.`
-      : 'The camera is processed locally. The five angles are sent to the backend for VQC classification.');
+      : CAMERA_NOTE);
   }
 
   renderHistory(state);
@@ -820,7 +821,7 @@ async function requestVqcPrediction(angles) {
     } else {
       $('state').textContent = `${MOVES[move].label} · STABILIZING`;
     }
-    setIntegrationStatus(`Camera active · VQC: ${MOVES[move].label} · ${predictionHistory.length}/9 votes collected.`);
+    setIntegrationStatus(`Quantum camera · VQC: ${MOVES[move].label} · ${predictionHistory.length}/9 votes collected.`);
 
     if (stable && votes >= 5 && gestureArmed && !rulesAreOpen() && !creditsAreOpen() && $('game').classList.contains('active') && !roundBusy && !gameState?.game_over) {
       gestureArmed = false;
@@ -901,9 +902,9 @@ async function startCamera() {
     inferenceEnabled = vqcAvailable;
     setCameraUi('on');
     setIntegrationStatus(vqcAvailable
-      ? 'Camera active · VQC ready. Hold a gesture steady; remove your hand to play again.'
+      ? 'Quantum camera active · VQC ready. Hold a gesture steady; remove your hand to play again.'
       : 'Camera active, but the VQC is unavailable. You can still use the manual buttons.');
-    setIntegrationDetails('The video is processed in your browser. Only the five angles are sent to Cloud Run for VQC classification.');
+    setIntegrationDetails(CAMERA_NOTE);
     lastVideoTime = -1;
     lastDetectionAt = 0;
     lastPredictionAt = 0;
@@ -985,7 +986,7 @@ function returnToIntro() {
   $('endtitle').innerHTML = 'CONGRATULATIONS!<br>YOU WIN!';
   $('endscore').textContent = '';
   setIntegrationStatus('Gesture model: not connected · Qiskit backend: demo mode');
-  setIntegrationDetails('The camera is processed locally. The angles are sent to the backend for VQC classification.');
+  setIntegrationDetails(CAMERA_NOTE);
   setIntroStatus('');
   setStartBusy(false);
   setScreen('intro');
@@ -1038,7 +1039,7 @@ async function boot() {
       ? 'Gesture model: VQC loaded · Qiskit backend: connected.'
       : 'Gesture model: not loaded · Qiskit backend: connected; manual play available.');
     setIntegrationDetails(vqcAvailable
-      ? 'Ready. Enable the camera to recognize gestures or use the three manual buttons.'
+      ? 'Ready. Start the quantum camera to play with your hand, or use the three manual buttons.'
       : 'Add the trained .dill model to Cloud Run to enable camera classification.');
     if (!startBusy) setIntroStatus('');
   } catch (error) {
