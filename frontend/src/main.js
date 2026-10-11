@@ -189,11 +189,11 @@ function renderHistory(state) {
     const playerPoints = row.player_points ?? row.player_score ?? '—';
     const machinePoints = row.machine_points ?? row.machine_score ?? row.bot_points ?? '—';
     return `<tr>
-      <td class="round-cell">${String(roundNumber).padStart(2, '0')}</td>
-      <td><div class="history-pact"><span class="history-pact-emoji">${pactEmoji}</span><span>${pactLabel}</span></div></td>
-      <td>${historyParticipantCell(row.player_move, playerDecision)}</td>
-      <td>${historyParticipantCell(row.machine_move, botDecision)}</td>
-      <td class="points-cell"><span>${playerPoints}</span><i>/</i><span>${machinePoints}</span></td>
+      <td class="round-cell" data-label="RONDA">${String(roundNumber).padStart(2, '0')}</td>
+      <td data-label="PACTO"><div class="history-pact"><span class="history-pact-emoji">${pactEmoji}</span><span>${pactLabel}</span></div></td>
+      <td data-label="PLAYER 1">${historyParticipantCell(row.player_move, playerDecision)}</td>
+      <td data-label="Q-BOT">${historyParticipantCell(row.machine_move, botDecision)}</td>
+      <td class="points-cell" data-label="PUNTOS J / Q"><span>${playerPoints}</span><i>/</i><span>${machinePoints}</span></td>
     </tr>`;
   }).join('') : '';
 
