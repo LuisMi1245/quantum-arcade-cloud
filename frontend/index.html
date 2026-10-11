@@ -18,7 +18,7 @@
       <p class="sub">Make your move, test your luck</p>
       <div class="intro-player" id="introPlayer" hidden>
         JUGADOR: <b id="introPlayerName"></b>
-        <button class="linkbtn" id="changeName" type="button">CAMBIAR NOMBRE</button>
+        <button class="linkbtn" id="changeName" type="button">CHANGE NAME</button>
       </div>
       <button class="arcade" id="start" type="button">START ▶</button>
     </div>
@@ -42,8 +42,8 @@
       <div class="agreement-main">
         <div class="agreement-symbol" id="agreementEmoji">🎲</div>
         <div class="agreement-copy">
-          <div class="agreement-label">PACT / ACUERDO ACTUAL</div>
-          <div id="agreementName" class="agreement-name">PULSA START</div>
+          <div class="agreement-label">CURRENT PACT / AGREEMENT</div>
+          <div id="agreementName" class="agreement-name">PRESS START</div>
           <div id="agreementRound" class="agreement-round">Se sortea un acuerdo por ronda.</div>
         </div>
       </div>
@@ -52,7 +52,7 @@
         <div class="action-chip betray"><strong>TRAICIONAR</strong><span>Vencer al acuerdo</span></div>
         <div class="action-chip neutral"><strong>NEUTRAL / NO DECISORIA</strong><span>Perder ante el acuerdo</span></div>
       </div>
-      <div class="scoring-note"><b>PUNTUACIÓN:</b> ambos cooperan: +3 cada uno · ambos traicionan: +1 cada uno · traición con victoria: +5 al ganador · demás situaciones: 0.</div>
+      <div class="scoring-note"><b>SCORE:</b> ambos cooperan: +3 cada uno · ambos traicionan: +1 cada uno · traición con victoria: +5 al ganador · demás situaciones: 0.</div>
     </section>
 
     <div class="grid">
@@ -162,12 +162,12 @@
 
   <div class="name-modal" id="nameModal" role="dialog" aria-modal="true" aria-labelledby="nameTitle" hidden>
     <form class="name-dialog" id="nameForm" autocomplete="off">
-      <div class="name-title" id="nameTitle">NUEVO JUGADOR</div>
+      <div class="name-title" id="nameTitle">NEW PLAYER</div>
       <label class="name-label" for="nameInput">¿What's your name? (máx. 12 characters)</label>
       <input id="nameInput" class="name-input" type="text" maxlength="12" placeholder="PLAYER 1" spellcheck="false">
       <div class="name-actions">
-        <button class="arcade" id="nameConfirm" type="submit">JUGAR ▶</button>
-        <button class="arcade secondary" id="nameCancel" type="button">CANCELAR</button>
+        <button class="arcade" id="nameConfirm" type="submit">PLAY ▶</button>
+        <button class="arcade secondary" id="nameCancel" type="button">CANCEL</button>
       </div>
     </form>
   </div>
