@@ -13,7 +13,13 @@ import threading
 import time
 from pathlib import Path
 from typing import Any
-from urllib.parse import urlsplit
+
+# Keep numerical libraries from creating large native thread pools in Cloud Run.
+# These are also set at container startup in the Dockerfile.
+os.environ.setdefault("OMP_NUM_THREADS", "1")
+os.environ.setdefault("OPENBLAS_NUM_THREADS", "1")
+os.environ.setdefault("MKL_NUM_THREADS", "1")
+os.environ.setdefault("NUMEXPR_NUM_THREADS", "1")
 
 import numpy as np
 from flask import Flask, jsonify, request
@@ -54,12 +60,46 @@ if not hasattr(sys.modules["__main__"], "interpretar_tres_clases"):
 
 VQC_MODEL = None
 VQC_LOAD_ERROR: str | None = None
+VQC_PREDICT_LOCK = threading.Lock()
+VQC_CIRCUIT = None
+VQC_INPUT_PARAMS: tuple[Any, ...] = ()
+VQC_WEIGHT_PARAMS: tuple[Any, ...] = ()
+VQC_WEIGHTS: np.ndarray | None = None
+
 try:
     from qiskit_machine_learning.algorithms import VQC
 
     if MODEL_PATH.is_file():
         VQC_MODEL = VQC.from_dill(str(MODEL_PATH))
-        print(f"VQC loaded from {MODEL_PATH}", flush=True)
+
+        # Keep the trained feature map, ansatz and learned weights from the .dill,
+        # but avoid VQC.predict()/SamplerQNN at inference time. That path crashes
+        # with SIGSEGV in this Cloud Run image. Five qubits are small enough to
+        # evaluate the same parameterized circuit with a simple NumPy statevector.
+        VQC_CIRCUIT = VQC_MODEL.circuit.remove_final_measurements(inplace=False)
+        VQC_CIRCUIT = VQC_CIRCUIT.decompose(reps=10)
+        VQC_INPUT_PARAMS = tuple(VQC_MODEL.feature_map.parameters)
+        VQC_WEIGHT_PARAMS = tuple(VQC_MODEL.ansatz.parameters)
+        VQC_WEIGHTS = np.asarray(VQC_MODEL.weights, dtype=float).reshape(-1)
+
+        if len(VQC_INPUT_PARAMS) != 5:
+            raise ValueError(
+                f"El VQC cargado espera {len(VQC_INPUT_PARAMS)} características, no 5."
+            )
+        if len(VQC_WEIGHT_PARAMS) != len(VQC_WEIGHTS):
+            raise ValueError(
+                "La cantidad de parámetros del ansatz no coincide con los pesos entrenados: "
+                f"{len(VQC_WEIGHT_PARAMS)} parámetros frente a {len(VQC_WEIGHTS)} pesos."
+            )
+        if set(VQC_INPUT_PARAMS).intersection(VQC_WEIGHT_PARAMS):
+            raise ValueError("El mapa de características y el ansatz comparten parámetros inesperados.")
+
+        print(
+            f"VQC loaded from {MODEL_PATH}; inference engine=numpy-statevector; "
+            f"qubits={VQC_CIRCUIT.num_qubits}; input_params={len(VQC_INPUT_PARAMS)}; "
+            f"weights={len(VQC_WEIGHTS)}",
+            flush=True,
+        )
     else:
         VQC_LOAD_ERROR = f"Model file not found: {MODEL_PATH}"
         print(VQC_LOAD_ERROR, flush=True)
@@ -85,28 +125,11 @@ def _cors_origin(origin: str | None) -> str | None:
     normalized = origin.rstrip("/")
     if normalized in ALLOWED_ORIGINS:
         return normalized
-
-    # Allow the production Pages domain and its own branch/deployment previews.
-    # This remains scoped to this project, not to every site hosted on pages.dev.
-    try:
-        parsed = urlsplit(normalized)
-        hostname = (parsed.hostname or "").lower()
-    except ValueError:
-        hostname = ""
-        parsed = None
-    pages_domain = "quantum-arcade-cloud.pages.dev"
-    is_this_pages_project = (
-        parsed is not None
-        and parsed.scheme == "https"
-        and (hostname == pages_domain or hostname.endswith("." + pages_domain))
-    )
-    if is_this_pages_project:
+    # Development convenience only: when no explicit allowlist is set, permit
+    # Pages deployments. In production set ALLOWED_ORIGINS to the exact site URL.
+    if not ALLOWED_ORIGINS and normalized.endswith(".pages.dev"):
         return normalized
-
     if normalized in {"http://localhost:5173", "http://127.0.0.1:5173"}:
-        return normalized
-    # In local development only, Pages domains can be tested if no allowlist is set.
-    if not ALLOWED_ORIGINS and hostname.endswith(".pages.dev"):
         return normalized
     return None
 
@@ -227,36 +250,138 @@ def health():
         "service": "quantum-arcade-api",
         "vqc_loaded": VQC_MODEL is not None,
         "vqc_error": VQC_LOAD_ERROR,
+        "vqc_inference_engine": "numpy_statevector_from_saved_circuit" if VQC_CIRCUIT is not None else None,
         "firestore_enabled": USE_FIRESTORE,
     })
 
 
+def _apply_local_unitary(
+    state: np.ndarray,
+    unitary: np.ndarray,
+    target_qubits: list[int],
+    n_qubits: int,
+) -> np.ndarray:
+    """Apply a small gate matrix using NumPy only (Qiskit little-endian order)."""
+    k = len(target_qubits)
+    local_dim = 1 << k
+    matrix = np.asarray(unitary, dtype=complex)
+    if matrix.shape != (local_dim, local_dim):
+        raise ValueError(
+            f"Puerta de forma {matrix.shape} no compatible con {k} qubits."
+        )
+
+    masks = [1 << q for q in target_qubits]
+    target_mask = 0
+    for mask in masks:
+        target_mask |= mask
+
+    output = state.copy()
+    # Each base has all target bits set to zero; its other bits identify one
+    # independent block of amplitudes. Each block contains 2**k amplitudes.
+    for base in range(1 << n_qubits):
+        if base & target_mask:
+            continue
+        indices = []
+        for local_index in range(local_dim):
+            global_index = base
+            for local_bit, qubit in enumerate(target_qubits):
+                if (local_index >> local_bit) & 1:
+                    global_index |= 1 << qubit
+            indices.append(global_index)
+        output[indices] = matrix @ state[indices]
+    return output
+
+
+def predict_class_from_saved_circuit(angles: np.ndarray) -> tuple[int, list[float]]:
+    """Evaluate the exact saved VQC circuit and group basis probabilities by index % 3.
+
+    This preserves the feature map, ansatz, learned weights and interpret(x)=x%3
+    from the trained VQC, while bypassing the crashing VQC.predict/SamplerQNN path.
+    The circuit has five qubits, so the full NumPy statevector has only 32 amplitudes.
+    """
+    if VQC_CIRCUIT is None or VQC_WEIGHTS is None:
+        raise RuntimeError(VQC_LOAD_ERROR or "El circuito VQC no está preparado.")
+
+    # angles is shape (1, 5); the original model uses the ordered feature_map
+    # parameters as inputs followed by the ansatz parameters as learned weights.
+    feature_values = np.asarray(angles, dtype=float).reshape(-1)
+    bindings = {
+        parameter: float(value)
+        for parameter, value in zip(VQC_INPUT_PARAMS, feature_values, strict=True)
+    }
+    bindings.update({
+        parameter: float(value)
+        for parameter, value in zip(VQC_WEIGHT_PARAMS, VQC_WEIGHTS, strict=True)
+    })
+
+    with VQC_PREDICT_LOCK:
+        bound_circuit = VQC_CIRCUIT.assign_parameters(bindings, inplace=False)
+        n_qubits = int(bound_circuit.num_qubits)
+        state = np.zeros(1 << n_qubits, dtype=complex)
+        state[0] = 1.0 + 0.0j
+
+        for item in bound_circuit.data:
+            operation = item.operation
+            name = operation.name.lower()
+            if name in {"barrier", "delay"}:
+                continue
+            if name == "measure":
+                # The VQC circuit is unmeasured after remove_final_measurements();
+                # this guard prevents accidentally simulating a non-unitary circuit.
+                raise ValueError("El circuito de inferencia contiene una medición inesperada.")
+            if name == "reset":
+                raise ValueError("El circuito del VQC contiene reset y no es unitario.")
+            try:
+                unitary = operation.to_matrix()
+            except Exception as exc:
+                raise ValueError(
+                    f"No se pudo obtener la matriz de la puerta '{name}'. "
+                    "El circuito necesita una descomposición adicional."
+                ) from exc
+            targets = [bound_circuit.find_bit(qubit).index for qubit in item.qubits]
+            state = _apply_local_unitary(state, unitary, targets, n_qubits)
+
+        basis_probabilities = np.abs(state) ** 2
+        total = float(basis_probabilities.sum())
+        if not np.isfinite(total) or total <= 0:
+            raise RuntimeError("El circuito produjo probabilidades inválidas.")
+        basis_probabilities = basis_probabilities / total
+
+        # Training used interpret=indice % 3 and output_shape=3, so sum each
+        # computational-basis probability into the same three class bins.
+        class_probabilities = np.zeros(3, dtype=float)
+        for basis_index, probability in enumerate(basis_probabilities):
+            class_probabilities[basis_index % 3] += float(probability)
+        class_id = int(np.argmax(class_probabilities))
+        return class_id, [float(value) for value in class_probabilities]
+
+
 @app.post("/api/predict")
 def predict_gesture():
-    if VQC_MODEL is None:
+    if VQC_MODEL is None or VQC_CIRCUIT is None:
         return json_error(
-            "El VQC no está cargado. Comprueba que el archivo .dill esté en backend/models y que Qiskit Machine Learning sea compatible.",
+            "El VQC no está cargado. Comprueba el archivo .dill y sus circuitos/pesos entrenados.",
             503,
         )
     payload = request.get_json(silent=True) or {}
     try:
         x = validate_angles(payload.get("angles"))
-        raw = np.asarray(VQC_MODEL.predict(x))
-        if raw.size == 1:
-            class_id = int(raw.reshape(-1)[0])
-        elif raw.ndim == 2 and raw.shape[0] == 1 and raw.shape[1] == 3:
-            class_id = int(np.argmax(raw[0]))
-        else:
-            return json_error(f"Formato de salida VQC inesperado: {raw.shape}", 500)
+        class_id, class_probabilities = predict_class_from_saved_circuit(x)
         moves = {0: "rock", 1: "paper", 2: "scissors"}
         if class_id not in moves:
             return json_error(f"El VQC devolvió una clase desconocida: {class_id}", 500)
-        return jsonify({"ok": True, "class_id": class_id, "gesture": moves[class_id]})
+        return jsonify({
+            "ok": True,
+            "class_id": class_id,
+            "gesture": moves[class_id],
+            "class_probabilities": class_probabilities,
+            "inference_engine": "numpy_statevector_from_saved_circuit",
+        })
     except ValueError as exc:
         return json_error(str(exc), 400)
     except Exception as exc:
-        app.logger.exception("VQC inference failed")
-        return json_error(f"Falló la inferencia VQC: {type(exc).__name__}", 500)
+        app.logger.exception("VQC statevector inference failed")
+        return json_error(f"Falló la inferencia VQC: {type(exc).__name__}: {exc}", 500)
 
 
 @app.get("/api/game/state")

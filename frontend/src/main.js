@@ -1,7 +1,7 @@
 import { FilesetResolver, HandLandmarker } from '@mediapipe/tasks-vision';
 import './style.css';
 
-const API_BASE = (import.meta.env.VITE_API_BASE_URL || 'https://quantum-arcade-api-238938266096.us-central1.run.app').replace(/\/$/, '');
+const API_BASE = (import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8080').replace(/\/$/, '');
 const MODEL_URL = `${import.meta.env.BASE_URL}models/hand_landmarker.task`;
 const WASM_URL = `${import.meta.env.BASE_URL}mediapipe/wasm`;
 const TOTAL_ROUNDS = 15;
@@ -49,18 +49,9 @@ function setScreen(id) {
   window.scrollTo(0, 0);
 }
 async function api(path, payload = undefined, method = 'POST') {
-  const options = { method, cache: 'no-store' };
-  // GET requests do not need Content-Type. Avoid an unnecessary CORS preflight for /health.
-  if (payload !== undefined) {
-    options.headers = { 'Content-Type': 'application/json' };
-    options.body = JSON.stringify(payload);
-  }
-  let response;
-  try {
-    response = await fetch(`${API_BASE}${path}`, options);
-  } catch (cause) {
-    throw new Error(`No se pudo conectar con la API (${API_BASE}). Comprueba CORS y la URL pública de Cloud Run.`);
-  }
+  const options = { method, headers: { 'Content-Type': 'application/json' }, cache: 'no-store' };
+  if (payload !== undefined) options.body = JSON.stringify(payload);
+  const response = await fetch(`${API_BASE}${path}`, options);
   const data = await response.json().catch(() => ({}));
   if (!response.ok || data.ok === false) throw new Error(data.error || `HTTP ${response.status}`);
   return data;
