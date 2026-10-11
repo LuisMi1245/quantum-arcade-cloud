@@ -18,16 +18,16 @@ const MOVES = {
   scissors: { label: 'SCISSORS', emoji: '✌️', spanish: 'tijeras' },
 };
 const SPANISH_TO_MOVE = { piedra: 'rock', papel: 'paper', tijeras: 'scissors', tijera: 'scissors' };
-const PERSONALITIES = { indiferente: 'INDIFERENTE', reciproco: 'RECÍPROCA', rencoroso: 'RENCOROSA' };
+const PERSONALITIES = { indiferente: 'INDIFFERENT', reciproco: 'RECIPROCAL', rencoroso: 'VENGEFUL' };
 const $ = (id) => document.getElementById(id);
 
 // Estos indicadores traducen los valores de estado enviados por el backend a
 // etiquetas consistentes, con un emoji visible en tarjetas e historial.
 const DECISIONS = {
-  cooperation: { label: 'COOPERACIÓN', emoji: '🤝', className: 'coop' },
-  betrayal: { label: 'TRAICIÓN', emoji: '⚔️', className: 'betray' },
-  neutral: { label: 'NO DECISORIA', emoji: '⚖️', className: 'neutral' },
-  unknown: { label: 'SIN CLASIFICAR', emoji: '❔', className: 'unknown' },
+  cooperation: { label: 'COOPERATION', emoji: '🤝', className: 'coop' },
+  betrayal: { label: 'BETRAYAL', emoji: '⚔️', className: 'betray' },
+  neutral: { label: 'NEUTRAL', emoji: '⚖️', className: 'neutral' },
+  unknown: { label: 'UNCLASSIFIED', emoji: '❔', className: 'unknown' },
 };
 
 // crypto.randomUUID solo existe en contextos seguros y sessionStorage puede lanzar error si el
@@ -123,10 +123,10 @@ function setIntroStatus(message, kind = 'info', detail = '') {
 
 function apiHint() {
   if (API_MISCONFIGURED) {
-    return 'Falta VITE_API_BASE_URL en este despliegue: la web está apuntando a http://127.0.0.1:8080. Defínela con la URL de Cloud Run y vuelve a desplegar.';
+    return 'VITE_API_BASE_URL is missing in this deployment: the site is pointing to http://127.0.0.1:8080. Set it to the Cloud Run URL and deploy again.';
   }
   if (location.protocol === 'https:' && API_BASE.startsWith('http:') && !/^http:\/\/(127\.0\.0\.1|localhost)/.test(API_BASE)) {
-    return `La web usa HTTPS pero la API es HTTP (${API_BASE}); el navegador la bloquea. Usa una URL https.`;
+    return `The site uses HTTPS but the API uses HTTP (${API_BASE}); the browser blocks it. Use an https URL.`;
   }
   return `API: ${API_BASE}`;
 }
@@ -138,7 +138,7 @@ function setStartBusy(busy) {
   const button = $('start');
   if (!button) return;
   button.disabled = busy;
-  button.textContent = busy ? 'CONECTANDO…' : START_LABEL;
+  button.textContent = busy ? 'CONNECTING…' : START_LABEL;
 }
 
 function setIntegrationStatus(message) {
@@ -169,8 +169,8 @@ function openNameModal(mode) {
   nameModalMode = mode;
   const input = $('nameInput');
   input.value = playerName;
-  $('nameTitle').textContent = mode === 'start' ? 'NUEVO JUGADOR' : 'CAMBIAR NOMBRE';
-  $('nameConfirm').textContent = mode === 'start' ? 'JUGAR ▶' : 'GUARDAR';
+  $('nameTitle').textContent = mode === 'start' ? 'NEW PLAYER' : 'CHANGE NAME';
+  $('nameConfirm').textContent = mode === 'start' ? 'PLAY ▶' : 'SAVE';
   $('nameModal').hidden = false;
   input.focus();
   input.select();
@@ -191,9 +191,9 @@ function confirmName() {
 
 // --- Botón de cámara (integrado en la tarjeta del jugador) ---
 const CAMERA_UI = {
-  off: { icon: '📷', label: 'ACTIVAR CÁMARA', hint: '¡Juega con tu mano! Muestra ✊ ✋ o ✌ a la cámara. Tu vídeo se queda en tu navegador.' },
-  loading: { icon: '⏳', label: 'ABRIENDO CÁMARA…', hint: 'Acepta el permiso de cámara en tu navegador.' },
-  on: { icon: '🟢', label: 'CÁMARA ACTIVA', hint: 'Muestra tu jugada y mantenla quieta; retira la mano para la siguiente ronda. Toca el botón para apagarla.' },
+  off: { icon: '📷', label: 'TURN ON CAMERA', hint: 'Play with your hand! Show ✊ ✋ or ✌ to the camera. Your video stays in your browser.' },
+  loading: { icon: '⏳', label: 'OPENING CAMERA…', hint: 'Accept the camera permission in your browser.' },
+  on: { icon: '🟢', label: 'CAMERA ON', hint: 'Show your move and hold it still; remove your hand for the next round. Tap the button to turn it off.' },
 };
 
 function setCameraUi(state, hintOverride) {
@@ -237,6 +237,40 @@ function trapRulesFocus(event) {
   else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
 }
 
+// --- Diálogo de créditos ---
+let creditsReturnFocus = null;
+const creditsAreOpen = () => !$('creditsModal').hidden;
+
+function openCredits() {
+  creditsReturnFocus = document.activeElement;
+  $('creditsModal').hidden = false;
+  document.body.classList.add('modal-open');
+  $('creditsBody').scrollTop = 0;
+  $('creditsClose').focus();
+}
+
+function closeCredits() {
+  if (!creditsAreOpen()) return;
+  $('creditsModal').hidden = true;
+  if (!rulesAreOpen()) document.body.classList.remove('modal-open');
+  // Si la mano sigue a la vista al cerrar, exige retirarla antes de poder jugar por gesto.
+  if (cameraOn) gestureArmed = false;
+  const fallback = document.querySelector('[data-open-credits]');
+  const target = creditsReturnFocus && creditsReturnFocus.isConnected ? creditsReturnFocus : fallback;
+  if (target) target.focus();
+}
+
+function trapCreditsFocus(event) {
+  if (!creditsAreOpen()) return;
+  if (event.key === 'Escape') { closeCredits(); return; }
+  if (event.key !== 'Tab') return;
+  const items = [...$('creditsDialog').querySelectorAll('button, [tabindex="0"]')];
+  const first = items[0];
+  const last = items[items.length - 1];
+  if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+  else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+}
+
 function setScreen(id) {
   document.querySelectorAll('.screen').forEach((screen) => screen.classList.remove('active'));
   $(id).classList.add('active');
@@ -254,8 +288,8 @@ async function api(path, payload = undefined, method = 'POST', timeoutMs = REQUE
     if (!response.ok || data.ok === false) throw new Error(data.error || `HTTP ${response.status}`);
     return data;
   } catch (error) {
-    if (error?.name === 'AbortError') throw new Error(`el servidor no respondió en ${Math.round(timeoutMs / 1000)} s`);
-    if (error instanceof TypeError) throw new Error('no se pudo conectar con el servidor (red, CORS o URL de la API incorrecta)');
+    if (error?.name === 'AbortError') throw new Error(`the server did not answer in ${Math.round(timeoutMs / 1000)} s`);
+    if (error instanceof TypeError) throw new Error('could not connect to the server (network, CORS or wrong API URL)');
     throw error;
   } finally {
     clearTimeout(timer);
@@ -441,14 +475,14 @@ function renderDecisionCard(participant, move, decision) {
   $(`${prefix}DecisionEmoji`).textContent = info.emoji;
   $(`${prefix}DecisionLabel`).textContent = info.label;
   $(`${prefix}MoveEmoji`).textContent = key ? MOVES[key].emoji : '—';
-  $(`${prefix}MoveLabel`).textContent = key ? MOVES[key].label : 'SIN JUGADA';
+  $(`${prefix}MoveLabel`).textContent = key ? MOVES[key].label : 'NO MOVE';
 }
 
 function historyParticipantCell(move, decision) {
   const key = moveKey(move);
   const info = decisionInfo(decision);
   const emoji = key ? MOVES[key].emoji : '—';
-  const label = key ? MOVES[key].label : 'SIN JUGADA';
+  const label = key ? MOVES[key].label : 'NO MOVE';
   return `<div class="history-participant">
     <div class="history-move"><span class="history-move-emoji">${emoji}</span><span class="history-move-label">${label}</span></div>
     <div class="decision-pill ${info.className}"><span class="decision-pill-emoji">${info.emoji}</span><span>${info.label}</span></div>
@@ -467,21 +501,21 @@ function renderHistory(state) {
     const playerPoints = row.player_points ?? row.player_score ?? '—';
     const machinePoints = row.machine_points ?? row.machine_score ?? row.bot_points ?? '—';
     return `<tr>
-      <td class="round-cell" data-label="RONDA">${String(roundNumber).padStart(2, '0')}</td>
-      <td data-label="PACTO"><div class="history-pact"><span class="history-pact-emoji">${pactEmoji}</span><span>${pactLabel}</span></div></td>
+      <td class="round-cell" data-label="ROUND">${String(roundNumber).padStart(2, '0')}</td>
+      <td data-label="PACT"><div class="history-pact"><span class="history-pact-emoji">${pactEmoji}</span><span>${pactLabel}</span></div></td>
       <td data-label="${escapeHtml(displayName())}">${historyParticipantCell(row.player_move, playerDecision)}</td>
       <td data-label="Q-BOT">${historyParticipantCell(row.machine_move, botDecision)}</td>
-      <td class="points-cell" data-label="PUNTOS J / Q"><span>${playerPoints}</span><i>/</i><span>${machinePoints}</span></td>
+      <td class="points-cell" data-label="POINTS P / Q"><span>${playerPoints}</span><i>/</i><span>${machinePoints}</span></td>
     </tr>`;
   }).join('') : '';
 
   const dotsFor = (forBot) => Array.from({ length: state.total_rounds || TOTAL_ROUNDS }, (_, i) => {
     const row = state.history?.[i];
-    if (!row) return '<span class="dot" title="Ronda sin jugar"></span>';
+    if (!row) return '<span class="dot" title="Round not played"></span>';
     const cls = winnerClass(row.winner, forBot);
-    const label = row.winner === 'Gana jugador' ? (forBot ? 'Derrota de Q-Bot' : 'Victoria del jugador')
-      : row.winner === 'Gana máquina' ? (forBot ? 'Victoria de Q-Bot' : 'Derrota del jugador') : 'Empate';
-    return `<span class="dot ${cls === 'won' ? 'win' : cls === 'lost' ? 'loss' : 'tie'}" title="Ronda ${i + 1}: ${label}"></span>`;
+    const label = row.winner === 'Gana jugador' ? (forBot ? 'Q-Bot loss' : 'Player win')
+      : row.winner === 'Gana máquina' ? (forBot ? 'Q-Bot win' : 'Player loss') : 'Tie';
+    return `<span class="dot ${cls === 'won' ? 'win' : cls === 'lost' ? 'loss' : 'tie'}" title="Round ${i + 1}: ${label}"></span>`;
   }).join('');
   $('pdots').innerHTML = dotsFor(false);
   $('bdots').innerHTML = dotsFor(true);
@@ -496,7 +530,7 @@ function updateEnding(state) {
   if (awaitingGuess) {
     // Las 15 rondas terminaron, pero el resultado final depende del bono de +15 puntos.
     $('endtitle').innerHTML = `${completed} ROUNDS COMPLETE<br>GUESS Q-BOT!`;
-    $('endscore').innerHTML = `${escapeHtml(displayName())}: ${playerScore}<br>Q-BOT: ${botScore}<br><small>ADIVINA LA PERSONALIDAD PARA EL BONO FINAL</small>`;
+    $('endscore').innerHTML = `${escapeHtml(displayName())}: ${playerScore}<br>Q-BOT: ${botScore}<br><small>GUESS THE PERSONALITY FOR THE FINAL BONUS</small>`;
   } else {
     const title = playerScore > botScore ? 'CONGRATULATIONS!<br>YOU WIN!'
       : playerScore < botScore ? 'BETTER LUCK<br>NEXT TIME' : 'IT\'S A TIE!<br>GOOD GAME!';
@@ -530,14 +564,14 @@ function renderGuessPanel(state) {
       button.classList.toggle('picked', button.dataset.personality === state.guessed_personality);
     });
     result.className = `guess-result ${right ? 'right' : 'wrong'}`;
-    result.textContent = `${right ? '¡ACERTASTE! +15 PUNTOS.' : 'NO ACERTASTE.'} Personalidad real: ${PERSONALITIES[state.personality] || String(state.personality || '—').toUpperCase()}.`;
+    result.textContent = `${right ? 'YOU GOT IT! +15 POINTS.' : 'WRONG GUESS.'} Real personality: ${PERSONALITIES[state.personality] || String(state.personality || '—').toUpperCase()}.`;
   } else {
     buttons.forEach((button) => {
       button.disabled = guessBusy;
       button.classList.remove('picked');
     });
     result.className = 'guess-result';
-    result.textContent = 'La personalidad es secreta. Elige una opción.';
+    result.textContent = 'The personality is secret. Choose one option.';
   }
 }
 
@@ -549,18 +583,18 @@ async function submitPersonalityGuess(guess) {
   panel.querySelectorAll('[data-personality]').forEach((button) => { button.disabled = true; });
   const result = $('guessResult');
   result.className = 'guess-result';
-  result.textContent = 'Revelando la personalidad de Q-BOT…';
+  result.textContent = "Revealing Q-BOT's personality…";
 
   try {
     const response = await api(GUESS_ENDPOINT, { session_id: sessionId, guess });
     renderState(response.state);
     setIntegrationStatus(response.correct
-      ? 'Personalidad acertada · +15 puntos añadidos al marcador.'
-      : 'Personalidad revelada · sin bono esta vez.');
+      ? 'Personality guessed · +15 points added to your score.'
+      : 'Personality revealed · no bonus this time.');
   } catch (error) {
     panel.querySelectorAll('[data-personality]').forEach((button) => { button.disabled = false; });
     result.className = 'guess-result wrong';
-    result.textContent = `No se pudo registrar la respuesta: ${error.message}`;
+    result.textContent = `Could not save your answer: ${error.message}`;
   } finally {
     guessBusy = false;
   }
@@ -578,12 +612,12 @@ function renderAgreementPanel(state) {
 
   if (state.game_over || !key) {
     emoji.textContent = '✓';
-    name.textContent = 'ACUERDOS COMPLETADOS';
-    detail.textContent = 'La partida terminó: ya no hay un pacto activo.';
+    name.textContent = 'PACTS COMPLETED';
+    detail.textContent = 'The game is over: there is no active pact.';
     actions.innerHTML = `
-      <div class="action-chip coop"><strong>COOPERAR</strong><span>Igualar el símbolo del pacto.</span></div>
-      <div class="action-chip betray"><strong>TRAICIONAR</strong><span>Elegir el símbolo que vence al pacto.</span></div>
-      <div class="action-chip neutral"><strong>NEUTRAL</strong><span>Elegir el símbolo que pierde contra el pacto.</span></div>`;
+      <div class="action-chip coop"><strong>COOPERATE</strong><span>Match the pact symbol.</span></div>
+      <div class="action-chip betray"><strong>BETRAY</strong><span>Choose the symbol that beats the pact.</span></div>
+      <div class="action-chip neutral"><strong>NEUTRAL</strong><span>Choose the symbol that loses to the pact.</span></div>`;
     return;
   }
 
@@ -594,11 +628,11 @@ function renderAgreementPanel(state) {
   const neutral = MOVES[losesToAgreement[key]];
   emoji.textContent = coop.emoji;
   name.textContent = coop.label;
-  detail.textContent = `RONDA ${round}/${total} · pacto aleatorio válido para esta ronda`;
+  detail.textContent = `ROUND ${round}/${total} · random pact for this round`;
   actions.innerHTML = `
-    <div class="action-chip coop"><strong>COOPERAR</strong><span>${coop.emoji} ${coop.label}<br>Igualar el acuerdo</span></div>
-    <div class="action-chip betray"><strong>TRAICIONAR</strong><span>${betray.emoji} ${betray.label}<br>Vencer al acuerdo</span></div>
-    <div class="action-chip neutral"><strong>NEUTRAL / NO DECISORIA</strong><span>${neutral.emoji} ${neutral.label}<br>Perder ante el acuerdo</span></div>`;
+    <div class="action-chip coop"><strong>COOPERATE</strong><span>${coop.emoji} ${coop.label}<br>Match the pact</span></div>
+    <div class="action-chip betray"><strong>BETRAY</strong><span>${betray.emoji} ${betray.label}<br>Beat the pact</span></div>
+    <div class="action-chip neutral"><strong>NEUTRAL</strong><span>${neutral.emoji} ${neutral.label}<br>Lose to the pact</span></div>`;
 }
 
 function renderState(state) {
@@ -622,14 +656,14 @@ function renderState(state) {
     const botKey = moveKey(last.machine_move);
     renderDecisionCard('player', last.player_move, recordDecision(last, 'player'));
     renderDecisionCard('bot', last.machine_move, recordDecision(last, 'bot'));
-    $('state').textContent = `${playerKey ? MOVES[playerKey].label : 'JUGADA'} · REGISTRADA`;
+    $('state').textContent = `${playerKey ? MOVES[playerKey].label : 'MOVE'} · RECORDED`;
     $('botstate').textContent = 'ROUND RESOLVED';
     document.querySelectorAll('[data-m]').forEach((button) => {
       button.classList.toggle('selected', button.dataset.m === playerKey);
     });
     setIntegrationDetails(
-      `Pacto de esta ronda: ${moveLabel(last.agreement)}. Última medición cuántica: |${last.quantum_measurement}⟩. ` +
-      `Jugada Q-BOT: ${botKey ? MOVES[botKey].label : '—'}. Puntos de la ronda: ${last.player_points} / ${last.machine_points}.`
+      `Pact this round: ${moveLabel(last.agreement)}. Last quantum measurement: |${last.quantum_measurement}⟩. ` +
+      `Q-BOT move: ${botKey ? MOVES[botKey].label : '—'}. Round points: ${last.player_points} / ${last.machine_points}.`
     );
   } else {
     renderDecisionCard('player', null, null);
@@ -637,8 +671,8 @@ function renderState(state) {
     $('state').textContent = 'READY';
     $('botstate').textContent = 'ACTIVE / THINKING';
     setIntegrationDetails(agreement
-      ? `Acuerdo de la ronda actual: ${moveLabel(agreement)}. Retira la mano después de una jugada para habilitar la siguiente.`
-      : 'La cámara se procesa localmente. Los cinco ángulos se envían al backend para la clasificación VQC.');
+      ? `Current round pact: ${moveLabel(agreement)}. Remove your hand after a move to enable the next one.`
+      : 'The camera is processed locally. The five angles are sent to the backend for VQC classification.');
   }
 
   renderHistory(state);
@@ -666,16 +700,16 @@ function resetGuessPanel() {
 }
 
 function reportStartError(error) {
-  console.error('[START] No se pudo iniciar la partida:', error);
-  setIntroStatus(`No se pudo iniciar la partida: ${error.message}`, 'error', `${apiHint()} Pulsa START para reintentar.`);
-  setIntegrationStatus(`No se pudo iniciar la partida: ${error.message}`);
-  setIntegrationDetails('Comprueba la API de Cloud Run y vuelve a pulsar START.');
+  console.error('[START] Could not start the game:', error);
+  setIntroStatus(`Could not start the game: ${error.message}`, 'error', `${apiHint()} Press START to try again.`);
+  setIntegrationStatus(`Could not start the game: ${error.message}`);
+  setIntegrationDetails('Check the Cloud Run API and press START again.');
 }
 
 async function startNewGame() {
   if (startBusy) return;
   setStartBusy(true);
-  setIntroStatus('Conectando con el servidor cuántico… si estaba dormido puede tardar hasta un minuto.', 'info');
+  setIntroStatus('Connecting to the quantum server… if it was asleep, it can take up to one minute.', 'info');
   unlockAudio();
   if (cameraOn || cameraStream) stopCamera();
   roundBusy = false;
@@ -708,7 +742,7 @@ async function startNewGame() {
       ? 'Gesture model: VQC loaded · Qiskit backend: connected.'
       : 'Gesture model: unavailable · Qiskit backend: connected; manual play is available.');
   } catch (error) {
-    reportStartError(new Error(`la respuesta de /api/game/reset no tiene el formato esperado (${error.message})`));
+    reportStartError(new Error(`the /api/game/reset response does not have the expected format (${error.message})`));
   } finally {
     setStartBusy(false);
   }
@@ -723,7 +757,7 @@ async function submitMove(move, source = 'buttons') {
   $('botstate').textContent = 'ACTIVE / THINKING';
   setIntegrationStatus(source === 'camera'
     ? `VQC detected ${MOVES[move].label}; resolving quantum round…`
-    : 'Jugada manual confirmada; resolviendo la ronda cuántica…');
+    : 'Manual move confirmed; resolving the quantum round…');
 
   try {
     const result = await api('/api/game/round', { session_id: sessionId, player_move: move });
@@ -737,8 +771,8 @@ async function submitMove(move, source = 'buttons') {
         : `Backend connected · Round ${record.round} complete; manual play remains available.`);
     }
   } catch (error) {
-    setIntegrationStatus(`No se pudo resolver la ronda: ${error.message}`);
-    setIntegrationDetails('Puedes seguir utilizando los botones manuales cuando la conexión se restablezca.');
+    setIntegrationStatus(`Could not resolve the round: ${error.message}`);
+    setIntegrationDetails('You can keep using the manual buttons when the connection is back.');
   } finally {
     roundBusy = false;
     if (gameState) renderState(gameState);
@@ -776,7 +810,7 @@ async function requestVqcPrediction(angles) {
   try {
     const result = await api('/api/predict', { angles });
     const move = result.gesture;
-    if (!MOVES[move]) throw new Error('El backend devolvió una clase inválida.');
+    if (!MOVES[move]) throw new Error('The backend returned an invalid class.');
     setMoveProbabilities(move);
     predictionHistory.push(move);
     if (predictionHistory.length > 9) predictionHistory.shift();
@@ -788,7 +822,7 @@ async function requestVqcPrediction(angles) {
     }
     setIntegrationStatus(`Camera active · VQC: ${MOVES[move].label} · ${predictionHistory.length}/9 votes collected.`);
 
-    if (stable && votes >= 5 && gestureArmed && !rulesAreOpen() && $('game').classList.contains('active') && !roundBusy && !gameState?.game_over) {
+    if (stable && votes >= 5 && gestureArmed && !rulesAreOpen() && !creditsAreOpen() && $('game').classList.contains('active') && !roundBusy && !gameState?.game_over) {
       gestureArmed = false;
       await submitMove(stable, 'camera');
     }
@@ -834,7 +868,7 @@ function detectionLoop() {
 async function startCamera() {
   if (!navigator.mediaDevices?.getUserMedia) {
     setIntegrationStatus('This browser cannot access the camera here. Use HTTPS or the manual buttons.');
-    setCameraUi('off', 'Este navegador no permite usar la cámara aquí (hace falta HTTPS). Juega con los botones ✊ ✋ ✌.');
+    setCameraUi('off', 'This browser cannot use the camera here (HTTPS is needed). Play with the buttons ✊ ✋ ✌.');
     return;
   }
   $('cameraToggle').disabled = true;
@@ -883,8 +917,8 @@ async function startCamera() {
     stopCamera();
     const denied = error?.name === 'NotAllowedError' || error?.name === 'SecurityError';
     setCameraUi('off', denied
-      ? 'Permiso de cámara denegado. Actívalo en tu navegador o juega con los botones ✊ ✋ ✌.'
-      : 'No se pudo activar la cámara. Puedes jugar con los botones ✊ ✋ ✌.');
+      ? 'Camera permission denied. Turn it on in your browser or play with the buttons ✊ ✋ ✌.'
+      : 'Could not turn on the camera. You can play with the buttons ✊ ✋ ✌.');
     setIntegrationStatus(`Could not start camera/MediaPipe: ${error.message || error}.`);
     setIntegrationDetails('Check camera permissions and make sure the model files were included in the frontend deployment.');
   } finally {
@@ -937,10 +971,10 @@ function returnToIntro() {
   renderDecisionCard('bot', null, null);
   $('roundlabel').textContent = 'ROUND 1 / 15 — Choose your move';
   renderAgreementPanel({ total_rounds: TOTAL_ROUNDS, round_number: 1, current_agreement: null, game_over: false });
-  $('agreementName').textContent = 'PULSA START';
-  $('agreementRound').textContent = 'Se sortea un acuerdo por ronda.';
+  $('agreementName').textContent = 'PRESS START';
+  $('agreementRound').textContent = 'One random pact is drawn each round.';
   $('agreementEmoji').textContent = '🎲';
-  $('agreementActions').innerHTML = '<div class="action-chip coop"><strong>COOPERAR</strong><span>Igualar el acuerdo</span></div><div class="action-chip betray"><strong>TRAICIONAR</strong><span>Vencer al acuerdo</span></div><div class="action-chip neutral"><strong>NEUTRAL / NO DECISORIA</strong><span>Perder ante el acuerdo</span></div>';
+  $('agreementActions').innerHTML = '<div class="action-chip coop"><strong>COOPERATE</strong><span>Match the pact</span></div><div class="action-chip betray"><strong>BETRAY</strong><span>Beat the pact</span></div><div class="action-chip neutral"><strong>NEUTRAL</strong><span>Lose to the pact</span></div>';
   $('hist').innerHTML = '';
   $('pdots').innerHTML = '';
   $('bdots').innerHTML = '';
@@ -951,7 +985,7 @@ function returnToIntro() {
   $('endtitle').innerHTML = 'CONGRATULATIONS!<br>YOU WIN!';
   $('endscore').textContent = '';
   setIntegrationStatus('Gesture model: not connected · Qiskit backend: demo mode');
-  setIntegrationDetails('La cámara se procesa localmente. Los ángulos se envían al backend para la clasificación VQC.');
+  setIntegrationDetails('The camera is processed locally. The angles are sent to the backend for VQC classification.');
   setIntroStatus('');
   setStartBusy(false);
   setScreen('intro');
@@ -982,6 +1016,11 @@ $('rulesClose').addEventListener('click', closeRules);
 $('rulesOk').addEventListener('click', closeRules);
 $('rulesModal').addEventListener('click', (event) => { if (event.target === $('rulesModal')) closeRules(); });
 document.addEventListener('keydown', trapRulesFocus);
+document.querySelectorAll('[data-open-credits]').forEach((button) => button.addEventListener('click', openCredits));
+$('creditsClose').addEventListener('click', closeCredits);
+$('creditsOk').addEventListener('click', closeCredits);
+$('creditsModal').addEventListener('click', (event) => { if (event.target === $('creditsModal')) closeCredits(); });
+document.addEventListener('keydown', trapCreditsFocus);
 $('end').addEventListener('click', () => {
   if (!gameState) { setScreen('ending'); return; }
   updateEnding(gameState);
@@ -1007,7 +1046,7 @@ async function boot() {
     inferenceEnabled = false;
     setIntegrationStatus(`API offline: ${error.message}. Check VITE_API_BASE_URL in Cloudflare Pages.`);
     setIntegrationDetails('The game requires the Cloud Run API; check the service URL and its availability.');
-    if (!startBusy) setIntroStatus(`No se pudo contactar con la API: ${error.message}`, 'error', `${apiHint()} Puedes pulsar START para reintentar.`);
+    if (!startBusy) setIntroStatus(`Could not reach the API: ${error.message}`, 'error', `${apiHint()} You can press START to try again.`);
   }
 }
 

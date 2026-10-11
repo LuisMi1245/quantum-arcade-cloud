@@ -793,3 +793,99 @@ body.modal-open { overflow: hidden; }
 .intro-status[hidden] { display: none; }
 .intro-status.error { border-color: var(--red); color: #ffd3da; }
 .intro-status small { display: block; margin-top: 6px; color: #b8b0d0; font-size: 12px; }
+
+/* --- Créditos --- */
+.sponsors { align-items: center; }
+.credits-btn {
+  background: #1a1034; color: var(--cyan);
+  border: 2px solid var(--cyan); border-radius: 2px;
+  padding: 8px 12px;
+  font: 9px 'Press Start 2P', monospace; line-height: 1.5;
+  box-shadow: 3px 3px #070510;
+}
+.credits-btn:hover { background: var(--cyan); color: #10102b; }
+.credits-btn:active { transform: translate(2px, 2px); box-shadow: 1px 1px #070510; }
+.credits-footer { display: flex; justify-content: center; margin-top: 6px; }
+
+.credits-modal {
+  position: fixed; inset: 0; z-index: 60;
+  display: grid; place-items: center;
+  padding: 12px;
+  background: rgba(7, 5, 16, .88);
+}
+.credits-modal[hidden] { display: none; }
+.credits-dialog {
+  width: min(560px, 100%);
+  max-height: calc(100vh - 24px);
+  max-height: calc(100dvh - 24px);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  border: 4px solid var(--cyan);
+  background: #1a1034;
+  box-shadow: 8px 8px #070510, 0 0 28px #47f3ff55;
+  animation: rulesPop .22s ease-out;
+}
+.credits-head { background: linear-gradient(135deg, #1b4a78, #2a1450); border-bottom-color: var(--cyan); }
+.credits-body { padding-top: 22px; }
+
+.credits-team { list-style: none; margin: 0; padding: 0; display: grid; gap: 18px; }
+.author {
+  --c: var(--pink);
+  display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 16px;
+  padding: 14px 16px;
+  background: #100b26;
+  border: 2px solid var(--c);
+  box-shadow: 5px 5px #070510;
+}
+.author.a-cyan { --c: var(--cyan); }
+.author.a-yellow { --c: var(--yellow); }
+.author.a-pink { --c: var(--pink); }
+.author-avatar {
+  position: relative;
+  width: 68px; height: 68px;
+  display: grid; place-items: center;
+  font-size: 36px;
+  background: #1a1034;
+  border: 3px solid var(--c);
+  box-shadow: 4px 4px #070510;
+  transition: transform .15s ease-out;
+}
+.author:hover .author-avatar { transform: translateY(-4px) rotate(-5deg); }
+.author-slot {
+  position: absolute; top: -13px; left: -9px;
+  padding: 3px 5px;
+  background: var(--c); color: #10102b;
+  font: 8px 'Press Start 2P', monospace; line-height: 1.3;
+}
+.author-info { min-width: 0; }
+.author-name {
+  margin: 0;
+  font: clamp(9px, 2.5vw, 12px) 'Press Start 2P', monospace; line-height: 1.7;
+  color: var(--c);
+  overflow-wrap: anywhere;
+}
+.author-role { margin: 6px 0 9px; font-size: 15px; line-height: 1.5; color: var(--cream); }
+.author-uni {
+  display: inline-block; padding: 3px 8px;
+  border: 2px solid var(--c); color: var(--c);
+  font: 8px 'Press Start 2P', monospace; line-height: 1.5;
+}
+.credits-support {
+  margin: 20px 0 0; padding: 12px 14px;
+  border: 2px dashed #73529b; background: #140d2b;
+  text-align: center; font-size: 16px; line-height: 1.6;
+}
+.credits-support b { color: var(--yellow); }
+.credits-fun { margin: 4px 0 0; text-align: center; font-size: 14px; color: #b8b0d0; }
+@media (prefers-reduced-motion: reduce) {
+  .credits-dialog { animation: none !important; }
+  .author-avatar { transition: none; }
+  .author:hover .author-avatar { transform: none; }
+}
+@media (max-width: 620px) {
+  .credits-modal { padding: 8px; }
+  .credits-dialog { max-height: calc(100vh - 16px); max-height: calc(100dvh - 16px); }
+  .author { gap: 12px; padding: 12px; }
+  .author-avatar { width: 54px; height: 54px; font-size: 28px; }
+  .author-role { font-size: 14px; }
+}
