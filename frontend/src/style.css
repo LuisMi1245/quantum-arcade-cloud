@@ -609,4 +609,187 @@ body.modal-open { overflow: hidden; }
 .name-modal { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; padding: 16px; background: rgba(7, 5, 16, .82); }
 .name-modal[hidden] { display: none; }
 .name-dialog { width: min(460px, 100%); padding: 20px; border: 4px solid var(--pink); background: #1a1034; box-shadow: 8px 8px #070510; text-align: center; }
-.name-title { font: 14px 'Press Start 2P', monospace; color: var(--yellow); line-height: 1.8; margin-bottom
+.name-title { font: 14px 'Press Start 2P', monospace; color: var(--yellow); line-height: 1.8; margin-bottom: 14px; }
+.name-label { display: block; font-size: 15px; margin-bottom: 10px; }
+.name-input { width: 100%; padding: 14px; border: 3px solid var(--cyan); background: #100b26; color: var(--cream); font: 16px 'Press Start 2P', monospace; text-align: center; text-transform: uppercase; }
+.name-input:focus-visible { outline: 3px solid white; }
+.name-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 18px; }
+.name-actions .arcade { font-size: 11px; padding: 14px 16px; }
+.arcade.secondary { background: #73529b; color: var(--cream); box-shadow: 0 7px #3d2a57, 0 10px #070510; }
+#playerNameHead { display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#playerNameTh { max-width: 90px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Adivinanza final de la personalidad de Q-BOT */
+.guess-panel {
+  width: min(700px, 92vw);
+  margin: 12px 0 22px;
+  padding: 14px;
+  border: 2px solid var(--cyan);
+  background: #1a1034;
+  box-shadow: 6px 6px #070510;
+}
+.guess-panel[hidden] { display: none; }
+.guess-title { font: 10px 'Press Start 2P', monospace; color: var(--cyan); line-height: 1.8; }
+.guess-question { margin: 8px 0 0; font-size: 15px; line-height: 1.6; }
+.guess-question b { color: var(--yellow); }
+.guess-options { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin: 14px 0; }
+.guess-options .arcade { font-size: 10px; padding: 14px 12px; min-width: 0; }
+.guess-options .arcade.picked { background: var(--cyan); box-shadow: 0 7px #1a7f88, 0 10px #070510; }
+.guess-options .arcade:disabled { transform: none; }
+.guess-result { min-height: 1.8em; line-height: 1.8; font-size: 15px; }
+.guess-result.right { color: var(--green); }
+.guess-result.wrong { color: var(--red); }
+
+@media (max-width: 1200px) {
+  .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .historypanel { grid-column: 1 / -1; }
+  .agreement-panel { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  .scoring-note { grid-column: auto; }
+  .historyframe { height: 300px; }
+  .historytable { min-width: 0; }
+}
+
+@media (max-width: 950px) {
+  .head { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 8px; }
+  .avatar { width: 40px; height: 40px; font-size: 25px; }
+  .player { padding: 6px; gap: 8px; }
+  .score { font-size: 14px; }
+  .frame { padding: 10px; }
+  .playerframe { grid-template-columns: 58px minmax(0, 1fr) 68px; gap: 7px; }
+  .move { width: 52px; height: 52px; font-size: 29px; }
+  .move-label { font-size: 11px; }
+  .prob { font-size: 11px; }
+  .historytable { font-size: 11px; }
+  .historytable th, .historytable td { padding-left: 4px; padding-right: 4px; }
+}
+
+@media (max-width: 760px) {
+  .screen { padding: 14px; }
+  #game { gap: 14px; }
+  .grid { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+  .grid > section, .historypanel { grid-column: auto; }
+  .section { font-size: clamp(9px, 2.4vw, 12px); }
+  .agreement-panel { padding: 10px; }
+  .agreement-actions { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; }
+  .action-chip { padding: 8px; }
+  .action-chip strong { font-size: 8px; }
+  .action-chip span { font-size: 11px; }
+  .frame { min-height: 300px; padding: 10px; }
+  .playerframe { grid-template-columns: 56px minmax(0, 1fr) 72px; gap: 7px; }
+  .historyframe { height: 280px; }
+  .historytable { font-size: 10px; }
+  .bottom { align-items: stretch; }
+  .bottom-buttons { width: 100%; }
+  .bottom-buttons .arcade { flex: 1 1 auto; }
+  .statsframe { width: 100%; padding: 12px; }
+  .statsheading { font-size: 13px; }
+}
+
+@media (max-width: 620px) {
+  .screen { padding: 10px; }
+  .head {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 7px;
+  }
+  .game-title { grid-column: 1 / -1; grid-row: 1; }
+  .head > .player { grid-row: 2; min-width: 0; gap: 5px; padding: 5px; }
+  .head > .player.bot { grid-column: 2; }
+  .avatar { width: 31px; height: 31px; font-size: 20px; }
+  .player strong { font-size: clamp(7px, 2.1vw, 9px); overflow-wrap: anywhere; }
+  .score { font-size: 11px; }
+  .agreement-main { align-items: flex-start; gap: 9px; }
+  .agreement-label { font-size: 8px; }
+  .agreement-name { font-size: 11px; }
+  .agreement-round { font-size: 11px; }
+  .agreement-symbol { flex-basis: 42px; width: 42px; height: 42px; font-size: 27px; }
+  .agreement-actions { grid-template-columns: minmax(0, 1fr); }
+  .action-chip { padding: 7px 9px; }
+  .action-chip strong { font-size: 9px; }
+  .action-chip span { font-size: 12px; }
+  .scoring-note { font-size: 10px; }
+  .frame { min-height: 290px; padding: 8px; }
+  .playerframe { grid-template-columns: 49px minmax(0, 1fr) 65px; grid-template-rows: auto auto; gap: 6px; }
+  .move { width: 44px; height: 44px; font-size: 25px; }
+  .move-label { font-size: 9px; }
+  .camera-stage { min-height: 150px; }
+  .character-placeholder { font-size: clamp(52px, 16vw, 76px); }
+  .prob { font-size: 8px; line-height: 1.5; overflow-wrap: anywhere; }
+  .probability-mark { font-size: 20px; }
+  .pct { font-size: 16px; margin-top: 5px; }
+  .status-title { font-size: 9px; }
+  .decision-summary { padding: 6px 4px; }
+  .decision-line { gap: 5px; font-size: clamp(7px, 2vw, 9px); }
+  .decision-emoji { font-size: 20px; }
+  .decision-move { gap: 5px; font-size: 11px; }
+  .decision-move-emoji { font-size: 22px; }
+  .system-state { font-size: 9px; }
+  .robot { font-size: 95px; }
+  .botname { font-size: 11px; }
+  .historyframe { height: auto; max-height: 430px; overflow-x: hidden; overflow-y: auto; padding: 6px; }
+  .historytable, .historytable tbody { display: block; width: 100%; min-width: 0; }
+  .historytable thead { display: none; }
+  .historytable tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 8px;
+    padding: 9px 5px;
+    border-bottom: 1px solid #6c357a;
+  }
+  .historytable td {
+    display: block;
+    min-width: 0;
+    padding: 3px 2px;
+    border: 0;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  .historytable td::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 5px;
+    color: #9f8cbb;
+    font: 8px/1.5 'Press Start 2P', monospace;
+    overflow-wrap: anywhere;
+  }
+  .round-cell { font-size: 12px; }
+  .history-pact { white-space: normal; gap: 5px; flex-wrap: wrap; }
+  .history-pact-emoji { font-size: 23px; }
+  .history-participant { gap: 5px; }
+  .history-move { white-space: normal; gap: 5px; flex-wrap: wrap; }
+  .history-move-emoji { font-size: 22px; }
+  .history-move-label { font-size: 10px; }
+  .decision-pill { max-width: 100%; white-space: normal; gap: 4px; padding: 3px 4px; font-size: 9px; overflow-wrap: anywhere; }
+  .decision-pill-emoji { font-size: 15px; }
+  .points-cell { grid-column: 1 / -1; text-align: left; font-size: 10px; }
+  .bottom { gap: 10px; }
+  .bottom-buttons { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .bottom-buttons .arcade { min-width: 0; width: 100%; padding: 11px 5px; font-size: clamp(7px, 2.1vw, 9px); line-height: 1.7; white-space: normal; overflow-wrap: anywhere; }
+  .hint { font-size: 12px; }
+  #integrationPanel { padding: 10px; font-size: 11px; }
+  #integrationDetails { font-size: 11px; }
+  .sponsors { left: 12px; right: 12px; font-size: 14px; }
+  .dot { width: 13px; height: 13px; }
+  .dots { gap: 6px; }
+  .name-dialog { padding: 14px; }
+  .name-actions .arcade { width: 100%; }
+  .guess-panel { padding: 10px; }
+  .guess-options { flex-direction: column; }
+  .guess-options .arcade { width: 100%; font-size: clamp(8px, 2.4vw, 10px); }
+}
+
+/* --- Mensajes de conexión en la pantalla de inicio (START) --- */
+.intro-status {
+  max-width: min(640px, 92vw);
+  margin: 22px auto 0;
+  padding: 12px 14px;
+  border: 2px solid var(--cyan);
+  background: #160d30;
+  color: var(--cyan);
+  font-size: 14px;
+  line-height: 1.7;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+.intro-status[hidden] { display: none; }
+.intro-status.error { border-color: var(--red); color: #ffd3da; }
+.intro-status small { display: block; margin-top: 6px; color: #b8b0d0; font-size: 12px; }
