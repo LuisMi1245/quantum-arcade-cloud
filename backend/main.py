@@ -13,6 +13,7 @@ import threading
 import time
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlsplit
 
 import numpy as np
 from flask import Flask, jsonify, request
@@ -84,11 +85,28 @@ def _cors_origin(origin: str | None) -> str | None:
     normalized = origin.rstrip("/")
     if normalized in ALLOWED_ORIGINS:
         return normalized
-    # Development convenience only: when no explicit allowlist is set, permit
-    # Pages deployments. In production set ALLOWED_ORIGINS to the exact site URL.
-    if not ALLOWED_ORIGINS and normalized.endswith(".pages.dev"):
+
+    # Allow the production Pages domain and its own branch/deployment previews.
+    # This remains scoped to this project, not to every site hosted on pages.dev.
+    try:
+        parsed = urlsplit(normalized)
+        hostname = (parsed.hostname or "").lower()
+    except ValueError:
+        hostname = ""
+        parsed = None
+    pages_domain = "quantum-arcade-cloud.pages.dev"
+    is_this_pages_project = (
+        parsed is not None
+        and parsed.scheme == "https"
+        and (hostname == pages_domain or hostname.endswith("." + pages_domain))
+    )
+    if is_this_pages_project:
         return normalized
+
     if normalized in {"http://localhost:5173", "http://127.0.0.1:5173"}:
+        return normalized
+    # In local development only, Pages domains can be tested if no allowlist is set.
+    if not ALLOWED_ORIGINS and hostname.endswith(".pages.dev"):
         return normalized
     return None
 

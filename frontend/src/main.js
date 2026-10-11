@@ -1,7 +1,7 @@
 import { FilesetResolver, HandLandmarker } from '@mediapipe/tasks-vision';
 import './style.css';
 
-const API_BASE = (import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8080').replace(/\/$/, '');
+const API_BASE = (import.meta.env.VITE_API_BASE_URL || 'https://quantum-arcade-api-238938266096.us-central1.run.app').replace(/\/$/, '');
 const MODEL_URL = `${import.meta.env.BASE_URL}models/hand_landmarker.task`;
 const WASM_URL = `${import.meta.env.BASE_URL}mediapipe/wasm`;
 const TOTAL_ROUNDS = 15;
@@ -49,9 +49,18 @@ function setScreen(id) {
   window.scrollTo(0, 0);
 }
 async function api(path, payload = undefined, method = 'POST') {
-  const options = { method, headers: { 'Content-Type': 'application/json' }, cache: 'no-store' };
-  if (payload !== undefined) options.body = JSON.stringify(payload);
-  const response = await fetch(`${API_BASE}${path}`, options);
+  const options = { method, cache: 'no-store' };
+  // GET requests do not need Content-Type. Avoid an unnecessary CORS preflight for /health.
+  if (payload !== undefined) {
+    options.headers = { 'Content-Type': 'application/json' };
+    options.body = JSON.stringify(payload);
+  }
+  let response;
+  try {
+    response = await fetch(`${API_BASE}${path}`, options);
+  } catch (cause) {
+    throw new Error(`No se pudo conectar con la API (${API_BASE}). Comprueba CORS y la URL pública de Cloud Run.`);
+  }
   const data = await response.json().catch(() => ({}));
   if (!response.ok || data.ok === false) throw new Error(data.error || `HTTP ${response.status}`);
   return data;
@@ -229,27 +238,6 @@ function extractAngles(landmarks) {
   const triplets = [[1,2,3],[5,6,7],[9,10,11],[13,14,15],[17,18,19]];
   return triplets.map(([a,b,c]) => calculateAngle(landmarks[a], landmarks[b], landmarks[c]));
 }
-function drawLandmarks(landmarks) {
-  const canvas = $('landmarkCanvas'); const video = $('gestureVideo');
-  if (!canvas || !video.videoWidth || !video.videoHeight) return;
-  const width = video.videoWidth; const height = video.videoHeight;
-  if (canvas.width !== width || canvas.height !== height) { canvas.width = width; canvas.height = height; }
-  const ctx = canvas.getContext('2d');
-  ctx.clearRect(0, 0, width, height);
-  if (!landmarks) return;
-  ctx.lineWidth = Math.max(2, width / 320); ctx.strokeStyle = '#47f3ff'; ctx.fillStyle = '#f04be8';
-  const connections = HandLandmarker.HAND_CONNECTIONS || [];
-  for (const connection of connections) {
-    const start = Array.isArray(connection) ? connection[0] : connection.start;
-    const end = Array.isArray(connection) ? connection[1] : connection.end;
-    const a = landmarks[start], b = landmarks[end];
-    if (!a || !b) continue;
-    ctx.beginPath(); ctx.moveTo(a.x * width, a.y * height); ctx.lineTo(b.x * width, b.y * height); ctx.stroke();
-  }
-  for (const point of landmarks) {
-    ctx.beginPath(); ctx.arc(point.x * width, point.y * height, Math.max(2.5, width / 150), 0, Math.PI * 2); ctx.fill();
-  }
-}
 function majorityPrediction() {
   const counts = new Map();
   predictionHistory.forEach((move) => counts.set(move, (counts.get(move) || 0) + 1));
@@ -292,7 +280,6 @@ function detectionLoop() {
     try {
       const result = handLandmarker.detectForVideo(video, now);
       const landmarks = result.landmarks?.[0] || null;
-      drawLandmarks(landmarks);
       if (landmarks) {
         noHandFrames = 0;
         if (inferenceEnabled && !predictionPending && now - lastPredictionAt >= 200) {
@@ -300,7 +287,6 @@ function detectionLoop() {
           requestVqcPrediction(extractAngles(landmarks));
         }
       } else {
-        $('landmarkCanvas').getContext('2d').clearRect(0, 0, $('landmarkCanvas').width, $('landmarkCanvas').height);
         noHandFrames += 1;
         predictionHistory = [];
         $('cameraResult').textContent = 'NO SE DETECTA MANO';
@@ -359,8 +345,6 @@ function stopCamera() {
   if ($('gestureVideo')) $('gestureVideo').srcObject = null;
   if (handLandmarker) { try { handLandmarker.close(); } catch (_) {} }
   handLandmarker = null;
-  const canvas = $('landmarkCanvas');
-  if (canvas) { const ctx = canvas.getContext('2d'); ctx.clearRect(0, 0, canvas.width, canvas.height); }
   if ($('cameraPlaceholder')) $('cameraPlaceholder').hidden = false;
   if ($('cameraToggle')) $('cameraToggle').textContent = 'CAMERA: OFF';
   if ($('cameraResult')) $('cameraResult').textContent = 'ESPERANDO GESTO';
