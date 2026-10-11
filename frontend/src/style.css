@@ -167,6 +167,38 @@ h1, h2, .pixel {
   gap: 18px;
 }
 
+/* Panel del pacto: conserva el diseño arcade sin reemplazar las tarjetas originales. */
+.agreement-panel {
+  display: grid;
+  grid-template-columns: minmax(220px, .9fr) minmax(0, 2fr);
+  gap: 10px 18px;
+  align-items: center;
+  border: 2px solid var(--yellow);
+  padding: 12px 16px 9px;
+  background: #1a1034e8;
+  box-shadow: 0 0 12px #ffd34f18;
+}
+.agreement-main { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.agreement-symbol {
+  flex: 0 0 54px; height: 54px; display: grid; place-items: center;
+  font-size: 34px; background: #10102b; border: 2px solid var(--yellow);
+}
+.agreement-label { color: var(--yellow); font: 9px 'Press Start 2P', monospace; line-height: 1.7; }
+.agreement-name { color: var(--cream); font: 14px 'Press Start 2P', monospace; line-height: 1.8; overflow-wrap: anywhere; }
+.agreement-round { color: #b8b0d0; font-size: 12px; line-height: 1.5; }
+.agreement-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.action-chip { min-width: 0; padding: 8px 10px; border: 1px solid #49305f; background: #100b26; line-height: 1.5; }
+.action-chip strong { display: block; font: 9px 'Press Start 2P', monospace; line-height: 1.8; margin-bottom: 3px; }
+.action-chip span { display: block; color: #d7cce8; font-size: 12px; }
+.action-chip.coop { border-color: var(--green); }
+.action-chip.coop strong { color: var(--green); }
+.action-chip.betray { border-color: var(--pink); }
+.action-chip.betray strong { color: var(--pink); }
+.action-chip.neutral { border-color: var(--cyan); }
+.action-chip.neutral strong { color: var(--cyan); }
+.scoring-note { grid-column: 1 / -1; color: #b8b0d0; border-top: 1px solid #49305f; padding-top: 7px; font-size: 11px; line-height: 1.5; }
+.scoring-note b { color: var(--yellow); }
+
 .section {
   font: clamp(9px, 1.1vw, 14px) 'Press Start 2P', monospace;
   margin: 0 0 10px;
@@ -203,11 +235,33 @@ h1, h2, .pixel {
 .move.selected, .move:hover { outline: 2px solid var(--pink); background: #35204f; }
 .move-label { text-align: center; font-size: 13px; }
 
-.character {
+.camera-stage {
+  align-self: stretch;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+.character-placeholder {
   text-align: center;
   font-size: clamp(60px, 7vw, 100px);
   filter: drop-shadow(4px 4px #6a347b);
 }
+#gestureVideo {
+  display: none;
+  width: 100%;
+  max-width: 100%;
+  aspect-ratio: 4 / 3;
+  height: auto;
+  max-height: 100%;
+  object-fit: cover;
+  border: 1px solid var(--cyan);
+  transform: scaleX(-1);
+  background: #10102b;
+}
+.camera-stage.camera-active .character-placeholder { display: none; }
 .prob { text-align: center; font-size: 13px; line-height: 1.5; }
 .probability-mark { font-size: 24px; }
 .pct { font-size: 21px; margin-top: 6px; }
@@ -273,14 +327,6 @@ h1, h2, .pixel {
 }
 #integrationPanel > b { color: var(--cyan); display: block; margin-bottom: 3px; }
 #integrationStatus { display: block; }
-#gestureVideo {
-  display: none;
-  width: 180px;
-  max-width: 100%;
-  margin-top: 10px;
-  border: 1px solid var(--cyan);
-  transform: scaleX(-1);
-}
 #integrationDetails { margin-top: 6px; color: #b8b0d0; font-size: 12px; }
 
 .endtitle { font-size: clamp(21px, 4.8vw, 52px); text-shadow: 5px 5px #4a2458, 8px 8px #070510; }
@@ -288,6 +334,8 @@ h1, h2, .pixel {
 
 @media (max-width: 950px) {
   .grid { grid-template-columns: 1fr 1fr; }
+  .agreement-panel { grid-template-columns: 1fr; gap: 10px; }
+  .scoring-note { grid-column: auto; }
   .historypanel { grid-column: 1/-1; }
   .historyframe { height: 230px; }
   .head { grid-template-columns: 1fr auto 1fr; }
@@ -303,9 +351,13 @@ h1, h2, .pixel {
   .player { grid-row: 2; }
   .grid { grid-template-columns: 1fr; }
   .historypanel { grid-column: auto; }
+  .agreement-panel { padding: 10px; }
+  .agreement-actions { grid-template-columns: 1fr; }
+  .agreement-name { font-size: 12px; }
+  .agreement-symbol { flex-basis: 46px; height: 46px; font-size: 29px; }
   .frame { height: 300px; }
   .historyframe { height: 230px; }
-  .character { font-size: 70px; }
+  .character-placeholder { font-size: 70px; }
   .robot { font-size: 95px; }
   .sponsors { font-size: 14px; }
   .dot { width: 13px; height: 13px; }

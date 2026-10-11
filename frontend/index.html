@@ -34,6 +34,24 @@
       </div>
     </header>
 
+    <!-- El pacto se conserva como bloque propio; no sustituye ni desplaza las tarjetas del juego. -->
+    <section id="agreementPanel" class="agreement-panel" aria-live="polite">
+      <div class="agreement-main">
+        <div class="agreement-symbol" id="agreementEmoji">🎲</div>
+        <div class="agreement-copy">
+          <div class="agreement-label">PACT / ACUERDO ACTUAL</div>
+          <div id="agreementName" class="agreement-name">PULSA START</div>
+          <div id="agreementRound" class="agreement-round">Se sortea un acuerdo por ronda.</div>
+        </div>
+      </div>
+      <div class="agreement-actions" id="agreementActions">
+        <div class="action-chip coop"><strong>COOPERAR</strong><span>Igualar el acuerdo</span></div>
+        <div class="action-chip betray"><strong>TRAICIONAR</strong><span>Vencer al acuerdo</span></div>
+        <div class="action-chip neutral"><strong>NEUTRAL / NO DECISORIA</strong><span>Perder ante el acuerdo</span></div>
+      </div>
+      <div class="scoring-note"><b>PUNTUACIÓN:</b> ambos cooperan: +3 cada uno · ambos traicionan: +1 cada uno · traición con victoria: +5 al ganador · demás situaciones: 0.</div>
+    </section>
+
     <div class="grid">
       <section>
         <h2 class="section"><span class="cyan">01A /</span> PLAYER 1 CHARACTER</h2>
@@ -43,7 +61,10 @@
             <div><button class="move" data-m="paper" type="button" aria-label="Elegir papel">✋</button><div class="move-label">PAPER</div></div>
             <div><button class="move" data-m="scissors" type="button" aria-label="Elegir tijeras">✌</button><div class="move-label">SCISSORS</div></div>
           </div>
-          <div class="character">🧑🏻‍🚀</div>
+          <div class="camera-stage" id="cameraStage">
+            <div class="character-placeholder" aria-hidden="true">🧑🏻‍🚀</div>
+            <video id="gestureVideo" autoplay playsinline muted aria-label="Vista previa de la cámara"></video>
+          </div>
           <div class="prob">
             <div class="cyan probability-mark">％</div>
             QUANTUM<br>PROBABILITY
@@ -95,7 +116,6 @@
     <div id="integrationPanel">
       <b>INTEGRATION STATUS</b>
       <span id="integrationStatus">Gesture model: not connected · Qiskit backend: demo mode</span>
-      <video id="gestureVideo" autoplay playsinline muted></video>
       <div id="integrationDetails">La cámara se procesa localmente. Los ángulos se envían al backend para la clasificación VQC.</div>
     </div>
   </section>

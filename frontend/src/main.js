@@ -146,6 +146,41 @@ function updateEnding(state) {
   $('endscore').innerHTML = `PLAYER 1: ${playerScore}<br>Q-BOT: ${botScore}<br><small>${completed} ROUNDS COMPLETE</small>`;
 }
 
+function renderAgreementPanel(state) {
+  const total = state.total_rounds || TOTAL_ROUNDS;
+  const round = state.round_number || total;
+  const key = moveKey(state.current_agreement);
+  const emoji = $('agreementEmoji');
+  const name = $('agreementName');
+  const detail = $('agreementRound');
+  const actions = $('agreementActions');
+  if (!emoji || !name || !detail || !actions) return;
+
+  if (state.game_over || !key) {
+    emoji.textContent = '✓';
+    name.textContent = 'ACUERDOS COMPLETADOS';
+    detail.textContent = 'La partida terminó: ya no hay un pacto activo.';
+    actions.innerHTML = `
+      <div class="action-chip coop"><strong>COOPERAR</strong><span>Igualar el símbolo del pacto.</span></div>
+      <div class="action-chip betray"><strong>TRAICIONAR</strong><span>Elegir el símbolo que vence al pacto.</span></div>
+      <div class="action-chip neutral"><strong>NEUTRAL</strong><span>Elegir el símbolo que pierde contra el pacto.</span></div>`;
+    return;
+  }
+
+  const beatsAgreement = { rock: 'paper', paper: 'scissors', scissors: 'rock' };
+  const losesToAgreement = { rock: 'scissors', paper: 'rock', scissors: 'paper' };
+  const coop = MOVES[key];
+  const betray = MOVES[beatsAgreement[key]];
+  const neutral = MOVES[losesToAgreement[key]];
+  emoji.textContent = coop.emoji;
+  name.textContent = coop.label;
+  detail.textContent = `RONDA ${round}/${total} · pacto aleatorio válido para esta ronda`;
+  actions.innerHTML = `
+    <div class="action-chip coop"><strong>COOPERAR</strong><span>${coop.emoji} ${coop.label}<br>Igualar el acuerdo</span></div>
+    <div class="action-chip betray"><strong>TRAICIONAR</strong><span>${betray.emoji} ${betray.label}<br>Vencer al acuerdo</span></div>
+    <div class="action-chip neutral"><strong>NEUTRAL / NO DECISORIA</strong><span>${neutral.emoji} ${neutral.label}<br>Perder ante el acuerdo</span></div>`;
+}
+
 function renderState(state) {
   gameState = state;
   $('ps').textContent = state.scores?.player ?? 0;
@@ -153,6 +188,7 @@ function renderState(state) {
 
   const total = state.total_rounds || TOTAL_ROUNDS;
   const agreement = state.current_agreement;
+  renderAgreementPanel(state);
   if (state.game_over) {
     $('roundlabel').textContent = `ROUND ${total} / ${total} — MATCH COMPLETE`;
   } else {
@@ -350,6 +386,7 @@ async function startCamera() {
     const video = $('gestureVideo');
     video.srcObject = cameraStream;
     video.style.display = 'block';
+    $('cameraStage').classList.add('camera-active');
     await video.play();
 
     setIntegrationStatus('Loading MediaPipe hand detector in the browser…');
@@ -400,6 +437,7 @@ function stopCamera() {
     video.srcObject = null;
     video.style.display = 'none';
   }
+  $('cameraStage')?.classList.remove('camera-active');
   if (handLandmarker) {
     try { handLandmarker.close(); } catch (_) { /* detector is already closed */ }
   }
@@ -425,6 +463,11 @@ function returnToIntro() {
   $('state').textContent = 'READY';
   $('botstate').textContent = 'ACTIVE / THINKING';
   $('roundlabel').textContent = 'ROUND 1 / 15 — Choose your move';
+  renderAgreementPanel({ total_rounds: TOTAL_ROUNDS, round_number: 1, current_agreement: null, game_over: false });
+  $('agreementName').textContent = 'PULSA START';
+  $('agreementRound').textContent = 'Se sortea un acuerdo por ronda.';
+  $('agreementEmoji').textContent = '🎲';
+  $('agreementActions').innerHTML = '<div class="action-chip coop"><strong>COOPERAR</strong><span>Igualar el acuerdo</span></div><div class="action-chip betray"><strong>TRAICIONAR</strong><span>Vencer al acuerdo</span></div><div class="action-chip neutral"><strong>NEUTRAL / NO DECISORIA</strong><span>Perder ante el acuerdo</span></div>';
   $('hist').innerHTML = '';
   $('pdots').innerHTML = '';
   $('bdots').innerHTML = '';
