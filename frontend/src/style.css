@@ -474,6 +474,27 @@ h1, h2, .pixel {
 .endtitle { font-size: clamp(21px, 4.8vw, 52px); text-shadow: 5px 5px #4a2458, 8px 8px #070510; }
 .endscore { color: var(--cyan); font-size: 19px; line-height: 2; margin-bottom: 10px; }
 
+/* Adivinanza final de la personalidad de Q-BOT */
+.guess-panel {
+  width: min(700px, 92vw);
+  margin: 12px 0 22px;
+  padding: 14px;
+  border: 2px solid var(--cyan);
+  background: #1a1034;
+  box-shadow: 6px 6px #070510;
+}
+.guess-panel[hidden] { display: none; }
+.guess-title { font: 10px 'Press Start 2P', monospace; color: var(--cyan); line-height: 1.8; }
+.guess-question { margin: 8px 0 0; font-size: 15px; line-height: 1.6; }
+.guess-question b { color: var(--yellow); }
+.guess-options { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin: 14px 0; }
+.guess-options .arcade { font-size: 10px; padding: 14px 12px; min-width: 0; }
+.guess-options .arcade.picked { background: var(--cyan); box-shadow: 0 7px #1a7f88, 0 10px #070510; }
+.guess-options .arcade:disabled { transform: none; }
+.guess-result { min-height: 1.8em; line-height: 1.8; font-size: 15px; }
+.guess-result.right { color: var(--green); }
+.guess-result.wrong { color: var(--red); }
+
 @media (max-width: 1200px) {
   .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .historypanel { grid-column: 1 / -1; }
@@ -604,4 +625,7 @@ h1, h2, .pixel {
   .sponsors { left: 12px; right: 12px; font-size: 14px; }
   .dot { width: 13px; height: 13px; }
   .dots { gap: 6px; }
+  .guess-panel { padding: 10px; }
+  .guess-options { flex-direction: column; }
+  .guess-options .arcade { width: 100%; font-size: clamp(8px, 2.4vw, 10px); }
 }

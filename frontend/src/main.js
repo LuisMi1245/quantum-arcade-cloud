@@ -5,6 +5,8 @@ const API_BASE = (import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8080').
 const MODEL_URL = `${import.meta.env.BASE_URL}models/hand_landmarker.task`;
 const WASM_URL = `${import.meta.env.BASE_URL}mediapipe/wasm`;
 const TOTAL_ROUNDS = 15;
+// Ruta que el backend debe exponer para registrar la adivinanza final (+15 pts si acierta).
+const GUESS_ENDPOINT = '/api/game/guess-personality';
 
 const MOVES = {
   rock: { label: 'ROCK', emoji: '✊', spanish: 'piedra' },
@@ -32,6 +34,7 @@ if (!sessionId) {
 
 let gameState = null;
 let roundBusy = false;
+let guessBusy = false;
 let audioContext = null;
 let cameraStream = null;
 let handLandmarker = null;
@@ -212,11 +215,76 @@ function renderHistory(state) {
 function updateEnding(state) {
   const playerScore = Number(state?.scores?.player || 0);
   const botScore = Number(state?.scores?.machine || 0);
-  const title = playerScore > botScore ? 'CONGRATULATIONS!<br>YOU WIN!'
-    : playerScore < botScore ? 'BETTER LUCK<br>NEXT TIME' : 'IT\'S A TIE!<br>GOOD GAME!';
-  $('endtitle').innerHTML = title;
   const completed = Number(state?.rounds_completed ?? state?.history?.length ?? 0);
-  $('endscore').innerHTML = `PLAYER 1: ${playerScore}<br>Q-BOT: ${botScore}<br><small>${completed} ROUNDS COMPLETE</small>`;
+  const awaitingGuess = Boolean(state?.game_over) && !state?.guess_submitted;
+
+  if (awaitingGuess) {
+    // Las 15 rondas terminaron, pero el resultado final depende del bono de +15 puntos.
+    $('endtitle').innerHTML = `${completed} ROUNDS COMPLETE<br>GUESS Q-BOT!`;
+    $('endscore').innerHTML = `PLAYER 1: ${playerScore}<br>Q-BOT: ${botScore}<br><small>ADIVINA LA PERSONALIDAD PARA EL BONO FINAL</small>`;
+  } else {
+    const title = playerScore > botScore ? 'CONGRATULATIONS!<br>YOU WIN!'
+      : playerScore < botScore ? 'BETTER LUCK<br>NEXT TIME' : 'IT\'S A TIE!<br>GOOD GAME!';
+    $('endtitle').innerHTML = title;
+    $('endscore').innerHTML = `PLAYER 1: ${playerScore}<br>Q-BOT: ${botScore}<br><small>${completed} ROUNDS COMPLETE</small>`;
+  }
+  renderGuessPanel(state);
+}
+
+function renderGuessPanel(state) {
+  const panel = $('guessPanel');
+  if (!panel) return;
+  const result = $('guessResult');
+  const buttons = panel.querySelectorAll('[data-personality]');
+
+  // Solo se puede adivinar cuando se completaron todas las rondas (el backend lo exige).
+  if (!state?.game_over) {
+    panel.hidden = true;
+    return;
+  }
+  panel.hidden = false;
+
+  if (state.guess_submitted) {
+    const right = Boolean(state.guess_correct);
+    buttons.forEach((button) => {
+      button.disabled = true;
+      button.classList.toggle('picked', button.dataset.personality === state.guessed_personality);
+    });
+    result.className = `guess-result ${right ? 'right' : 'wrong'}`;
+    result.textContent = `${right ? '¡ACERTASTE! +15 PUNTOS.' : 'NO ACERTASTE.'} Personalidad real: ${PERSONALITIES[state.personality] || String(state.personality || '—').toUpperCase()}.`;
+  } else {
+    buttons.forEach((button) => {
+      button.disabled = guessBusy;
+      button.classList.remove('picked');
+    });
+    result.className = 'guess-result';
+    result.textContent = 'La personalidad es secreta. Elige una opción.';
+  }
+}
+
+async function submitPersonalityGuess(guess) {
+  if (guessBusy || !gameState?.game_over || gameState.guess_submitted) return;
+  guessBusy = true;
+  unlockAudio();
+  const panel = $('guessPanel');
+  panel.querySelectorAll('[data-personality]').forEach((button) => { button.disabled = true; });
+  const result = $('guessResult');
+  result.className = 'guess-result';
+  result.textContent = 'Revelando la personalidad de Q-BOT…';
+
+  try {
+    const response = await api(GUESS_ENDPOINT, { session_id: sessionId, guess });
+    renderState(response.state);
+    setIntegrationStatus(response.correct
+      ? 'Personalidad acertada · +15 puntos añadidos al marcador.'
+      : 'Personalidad revelada · sin bono esta vez.');
+  } catch (error) {
+    panel.querySelectorAll('[data-personality]').forEach((button) => { button.disabled = false; });
+    result.className = 'guess-result wrong';
+    result.textContent = `No se pudo registrar la respuesta: ${error.message}`;
+  } finally {
+    guessBusy = false;
+  }
 }
 
 function renderAgreementPanel(state) {
@@ -306,10 +374,24 @@ function renderState(state) {
   }
 }
 
+function resetGuessPanel() {
+  const panel = $('guessPanel');
+  if (!panel) return;
+  panel.hidden = true;
+  panel.querySelectorAll('[data-personality]').forEach((button) => {
+    button.disabled = false;
+    button.classList.remove('picked');
+  });
+  const result = $('guessResult');
+  if (result) { result.className = 'guess-result'; result.textContent = ''; }
+}
+
 async function startNewGame() {
   unlockAudio();
   if (cameraOn || cameraStream) stopCamera();
   roundBusy = false;
+  guessBusy = false;
+  resetGuessPanel();
   gestureArmed = true;
   predictionHistory = [];
   predictionPending = false;
@@ -533,6 +615,8 @@ function returnToIntro() {
   if (cameraOn || cameraStream) stopCamera();
   gameState = null;
   roundBusy = false;
+  guessBusy = false;
+  resetGuessPanel();
   predictionHistory = [];
   setMoveProbabilities(null);
   $('ps').textContent = '0';
@@ -562,6 +646,9 @@ function returnToIntro() {
 }
 
 $('start').addEventListener('click', startNewGame);
+document.querySelectorAll('[data-personality]').forEach((button) => {
+  button.addEventListener('click', () => submitPersonalityGuess(button.dataset.personality));
+});
 $('restart').addEventListener('click', returnToIntro);
 document.querySelectorAll('[data-m]').forEach((button) => {
   button.addEventListener('click', () => submitMove(button.dataset.m, 'buttons'));

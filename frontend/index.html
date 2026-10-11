@@ -141,6 +141,18 @@
   <section id="ending" class="screen">
     <h1 class="endtitle" id="endtitle">CONGRATULATIONS!<br>YOU WIN!</h1>
     <div class="endscore" id="endscore"></div>
+
+    <div id="guessPanel" class="guess-panel" hidden>
+      <div class="guess-title">FINAL / ADIVINA LA PERSONALIDAD</div>
+      <p class="guess-question">¿Qué estrategia secreta utilizó Q-BOT? Acierta y gana <b>+15 puntos</b>.</p>
+      <div class="guess-options">
+        <button class="arcade" type="button" data-personality="indiferente">INDIFERENTE</button>
+        <button class="arcade" type="button" data-personality="reciproco">RECÍPROCA</button>
+        <button class="arcade" type="button" data-personality="rencoroso">RENCOROSA</button>
+      </div>
+      <div id="guessResult" class="guess-result" aria-live="polite"></div>
+    </div>
+
     <button class="arcade" id="restart" type="button">RESTART ▶</button>
   </section>
 
