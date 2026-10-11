@@ -474,6 +474,134 @@ h1, h2, .pixel {
 .endtitle { font-size: clamp(21px, 4.8vw, 52px); text-shadow: 5px 5px #4a2458, 8px 8px #070510; }
 .endscore { color: var(--cyan); font-size: 19px; line-height: 2; margin-bottom: 10px; }
 
+/* Botón de cámara integrado en la tarjeta del jugador */
+.camera-cta { grid-column: 1 / -1; display: grid; gap: 6px; min-width: 0; margin-top: 8px; }
+.camera-btn {
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 13px 12px;
+  font-size: clamp(9px, 1.5vw, 12px);
+  line-height: 1.6;
+  white-space: normal;
+  background: var(--cyan);
+  color: #10102b;
+  box-shadow: 0 6px #1a7f88, 0 9px #070510;
+}
+.camera-btn:active { transform: translateY(4px); box-shadow: 0 2px #1a7f88; }
+.camera-btn-icon { font-size: 1.9em; line-height: 1; }
+.camera-hint { text-align: center; font-size: 13px; line-height: 1.5; color: #d7cce8; overflow-wrap: anywhere; }
+.camera-cta[data-state="loading"] .camera-btn { background: var(--yellow); box-shadow: 0 6px #9b5d25, 0 9px #070510; }
+.camera-cta[data-state="on"] .camera-btn { background: var(--green); box-shadow: 0 6px #1b8a3c, 0 9px #070510; }
+.camera-cta[data-state="on"] .camera-btn:active { box-shadow: 0 2px #1b8a3c; }
+/* Pulso breve (6 veces) mientras la cámara está apagada, para que se note que es pulsable */
+.camera-cta[data-state="off"] .camera-btn { animation: cameraPulse 1.5s ease-in-out 6; }
+@keyframes cameraPulse {
+  0%, 100% { box-shadow: 0 6px #1a7f88, 0 9px #070510, 0 0 0 0 rgba(71, 243, 255, .7); }
+  50% { box-shadow: 0 6px #1a7f88, 0 9px #070510, 0 0 0 12px rgba(71, 243, 255, 0); }
+}
+
+/* Diálogo "Cómo jugar" */
+body.modal-open { overflow: hidden; }
+.rules-modal {
+  position: fixed; inset: 0; z-index: 60;
+  display: grid; place-items: center;
+  padding: 12px;
+  background: rgba(7, 5, 16, .88);
+}
+.rules-modal[hidden] { display: none; }
+.rules-dialog {
+  width: min(740px, 100%);
+  max-height: calc(100vh - 24px);
+  max-height: calc(100dvh - 24px);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  border: 4px solid var(--yellow);
+  background: #1a1034;
+  box-shadow: 8px 8px #070510, 0 0 28px #f04be866;
+  animation: rulesPop .22s ease-out;
+}
+@keyframes rulesPop { from { transform: scale(.92) translateY(10px); opacity: 0; } to { transform: none; opacity: 1; } }
+.rules-head {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+  padding: 14px 16px;
+  background: linear-gradient(135deg, #5a1d7a, #2a1450);
+  border-bottom: 3px solid var(--pink);
+}
+.rules-title { font: clamp(11px, 2.6vw, 16px) 'Press Start 2P', monospace; color: var(--yellow); line-height: 1.7; text-shadow: 3px 3px #070510; }
+.rules-sub { margin-top: 6px; font-size: 14px; line-height: 1.5; color: var(--cream); }
+.rules-close {
+  flex: none; width: 38px; height: 38px;
+  border: 2px solid var(--cyan); background: #10102b; color: var(--cyan);
+  font: 16px 'Press Start 2P', monospace; line-height: 1;
+}
+.rules-close:hover { background: var(--cyan); color: #10102b; }
+.rules-body {
+  overflow-y: auto; overscroll-behavior: contain;
+  display: grid; gap: 12px; align-content: start;
+  padding: 14px 16px;
+}
+.rules-body:focus-visible { outline: 3px solid white; outline-offset: -3px; }
+.rule-card { min-width: 0; padding: 12px 14px; background: #100b26; border: 2px solid var(--c, var(--cyan)); border-left-width: 8px; }
+.rule-card.r-cyan { --c: var(--cyan); }
+.rule-card.r-pink { --c: var(--pink); }
+.rule-card.r-yellow { --c: var(--yellow); }
+.rule-card.r-green { --c: var(--green); }
+.rule-card h3 {
+  display: flex; align-items: center; gap: 10px;
+  margin: 0 0 8px;
+  font: clamp(8px, 2vw, 11px) 'Press Start 2P', monospace; line-height: 1.8;
+  color: var(--c);
+}
+.rule-num {
+  flex: none; display: grid; place-items: center;
+  width: 26px; height: 26px;
+  background: var(--c); color: #10102b;
+  font: 11px 'Press Start 2P', monospace;
+}
+.rule-card p { margin: 0 0 8px; font-size: 15px; line-height: 1.6; }
+.rule-card p:last-child { margin-bottom: 0; }
+.rule-card b.gold { color: var(--yellow); }
+.nb { white-space: nowrap; }
+.rule-chips { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 8px 0; }
+.rule-chip { min-width: 0; padding: 8px 10px; background: #1a1034; border: 2px solid #49305f; line-height: 1.5; overflow-wrap: anywhere; }
+.rule-chip strong { display: block; margin-bottom: 4px; font: 9px 'Press Start 2P', monospace; line-height: 1.8; }
+.rule-chip span { display: block; font-size: 13px; color: #e6dcf2; }
+.rule-chip.coop { border-color: var(--green); } .rule-chip.coop strong { color: var(--green); }
+.rule-chip.betray { border-color: var(--pink); } .rule-chip.betray strong { color: var(--pink); }
+.rule-chip.neutral { border-color: var(--cyan); } .rule-chip.neutral strong { color: var(--cyan); }
+.rule-example { margin-top: 8px; padding: 8px 10px; border: 2px dashed #73529b; background: #140d2b; font-size: 14px; line-height: 1.6; }
+.score-list { display: grid; gap: 6px; }
+.score-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 7px 10px; background: #1a1034; border: 1px solid #49305f;
+  font-size: 14px; line-height: 1.4;
+}
+.score-row span { min-width: 0; overflow-wrap: anywhere; }
+.pts { flex: none; padding: 4px 8px; font: 9px 'Press Start 2P', monospace; line-height: 1.5; color: #10102b; }
+.pts.good { background: var(--green); }
+.pts.mid { background: var(--cyan); }
+.pts.big { background: var(--yellow); }
+.pts.zero { background: #73529b; color: var(--cream); }
+.rules-foot { padding: 12px 16px 16px; text-align: center; border-top: 3px solid #49305f; background: #1a1034; }
+.rules-foot .arcade { font-size: clamp(10px, 2.4vw, 13px); padding: 14px 22px; }
+@media (prefers-reduced-motion: reduce) {
+  .camera-cta .camera-btn, .rules-dialog { animation: none !important; }
+}
+@media (max-width: 620px) {
+  .rules-modal { padding: 8px; }
+  .rules-dialog { max-height: calc(100vh - 16px); max-height: calc(100dvh - 16px); }
+  .rules-head { padding: 12px; }
+  .rules-title { text-shadow: none; }
+  .rules-body { padding: 12px; }
+  .rule-chips { grid-template-columns: 1fr; }
+  .score-row { font-size: 13px; }
+  .camera-hint { font-size: 12px; }
+}
+
 /* Nombre del jugador (modal + chip de la intro) */
 .intro-player { margin: 0 0 18px; font-size: 16px; color: var(--cyan); }
 .intro-player b { color: var(--yellow); }
@@ -481,170 +609,4 @@ h1, h2, .pixel {
 .name-modal { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; padding: 16px; background: rgba(7, 5, 16, .82); }
 .name-modal[hidden] { display: none; }
 .name-dialog { width: min(460px, 100%); padding: 20px; border: 4px solid var(--pink); background: #1a1034; box-shadow: 8px 8px #070510; text-align: center; }
-.name-title { font: 14px 'Press Start 2P', monospace; color: var(--yellow); line-height: 1.8; margin-bottom: 14px; }
-.name-label { display: block; font-size: 15px; margin-bottom: 10px; }
-.name-input { width: 100%; padding: 14px; border: 3px solid var(--cyan); background: #100b26; color: var(--cream); font: 16px 'Press Start 2P', monospace; text-align: center; text-transform: uppercase; }
-.name-input:focus-visible { outline: 3px solid white; }
-.name-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 18px; }
-.name-actions .arcade { font-size: 11px; padding: 14px 16px; }
-.arcade.secondary { background: #73529b; color: var(--cream); box-shadow: 0 7px #3d2a57, 0 10px #070510; }
-#playerNameHead { display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-#playerNameTh { max-width: 90px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-
-/* Adivinanza final de la personalidad de Q-BOT */
-.guess-panel {
-  width: min(700px, 92vw);
-  margin: 12px 0 22px;
-  padding: 14px;
-  border: 2px solid var(--cyan);
-  background: #1a1034;
-  box-shadow: 6px 6px #070510;
-}
-.guess-panel[hidden] { display: none; }
-.guess-title { font: 10px 'Press Start 2P', monospace; color: var(--cyan); line-height: 1.8; }
-.guess-question { margin: 8px 0 0; font-size: 15px; line-height: 1.6; }
-.guess-question b { color: var(--yellow); }
-.guess-options { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin: 14px 0; }
-.guess-options .arcade { font-size: 10px; padding: 14px 12px; min-width: 0; }
-.guess-options .arcade.picked { background: var(--cyan); box-shadow: 0 7px #1a7f88, 0 10px #070510; }
-.guess-options .arcade:disabled { transform: none; }
-.guess-result { min-height: 1.8em; line-height: 1.8; font-size: 15px; }
-.guess-result.right { color: var(--green); }
-.guess-result.wrong { color: var(--red); }
-
-@media (max-width: 1200px) {
-  .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .historypanel { grid-column: 1 / -1; }
-  .agreement-panel { grid-template-columns: minmax(0, 1fr); gap: 10px; }
-  .scoring-note { grid-column: auto; }
-  .historyframe { height: 300px; }
-  .historytable { min-width: 0; }
-}
-
-@media (max-width: 950px) {
-  .head { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 8px; }
-  .avatar { width: 40px; height: 40px; font-size: 25px; }
-  .player { padding: 6px; gap: 8px; }
-  .score { font-size: 14px; }
-  .frame { padding: 10px; }
-  .playerframe { grid-template-columns: 58px minmax(0, 1fr) 68px; gap: 7px; }
-  .move { width: 52px; height: 52px; font-size: 29px; }
-  .move-label { font-size: 11px; }
-  .prob { font-size: 11px; }
-  .historytable { font-size: 11px; }
-  .historytable th, .historytable td { padding-left: 4px; padding-right: 4px; }
-}
-
-@media (max-width: 760px) {
-  .screen { padding: 14px; }
-  #game { gap: 14px; }
-  .grid { grid-template-columns: minmax(0, 1fr); gap: 16px; }
-  .grid > section, .historypanel { grid-column: auto; }
-  .section { font-size: clamp(9px, 2.4vw, 12px); }
-  .agreement-panel { padding: 10px; }
-  .agreement-actions { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; }
-  .action-chip { padding: 8px; }
-  .action-chip strong { font-size: 8px; }
-  .action-chip span { font-size: 11px; }
-  .frame { min-height: 300px; padding: 10px; }
-  .playerframe { grid-template-columns: 56px minmax(0, 1fr) 72px; gap: 7px; }
-  .historyframe { height: 280px; }
-  .historytable { font-size: 10px; }
-  .bottom { align-items: stretch; }
-  .bottom-buttons { width: 100%; }
-  .bottom-buttons .arcade { flex: 1 1 auto; }
-  .statsframe { width: 100%; padding: 12px; }
-  .statsheading { font-size: 13px; }
-}
-
-@media (max-width: 620px) {
-  .screen { padding: 10px; }
-  .head {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: 7px;
-  }
-  .game-title { grid-column: 1 / -1; grid-row: 1; }
-  .head > .player { grid-row: 2; min-width: 0; gap: 5px; padding: 5px; }
-  .head > .player.bot { grid-column: 2; }
-  .avatar { width: 31px; height: 31px; font-size: 20px; }
-  .player strong { font-size: clamp(7px, 2.1vw, 9px); overflow-wrap: anywhere; }
-  .score { font-size: 11px; }
-  .agreement-main { align-items: flex-start; gap: 9px; }
-  .agreement-label { font-size: 8px; }
-  .agreement-name { font-size: 11px; }
-  .agreement-round { font-size: 11px; }
-  .agreement-symbol { flex-basis: 42px; width: 42px; height: 42px; font-size: 27px; }
-  .agreement-actions { grid-template-columns: minmax(0, 1fr); }
-  .action-chip { padding: 7px 9px; }
-  .action-chip strong { font-size: 9px; }
-  .action-chip span { font-size: 12px; }
-  .scoring-note { font-size: 10px; }
-  .frame { min-height: 290px; padding: 8px; }
-  .playerframe { grid-template-columns: 49px minmax(0, 1fr) 65px; grid-template-rows: auto auto; gap: 6px; }
-  .move { width: 44px; height: 44px; font-size: 25px; }
-  .move-label { font-size: 9px; }
-  .camera-stage { min-height: 150px; }
-  .character-placeholder { font-size: clamp(52px, 16vw, 76px); }
-  .prob { font-size: 8px; line-height: 1.5; overflow-wrap: anywhere; }
-  .probability-mark { font-size: 20px; }
-  .pct { font-size: 16px; margin-top: 5px; }
-  .status-title { font-size: 9px; }
-  .decision-summary { padding: 6px 4px; }
-  .decision-line { gap: 5px; font-size: clamp(7px, 2vw, 9px); }
-  .decision-emoji { font-size: 20px; }
-  .decision-move { gap: 5px; font-size: 11px; }
-  .decision-move-emoji { font-size: 22px; }
-  .system-state { font-size: 9px; }
-  .robot { font-size: 95px; }
-  .botname { font-size: 11px; }
-  .historyframe { height: auto; max-height: 430px; overflow-x: hidden; overflow-y: auto; padding: 6px; }
-  .historytable, .historytable tbody { display: block; width: 100%; min-width: 0; }
-  .historytable thead { display: none; }
-  .historytable tr {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: 8px;
-    padding: 9px 5px;
-    border-bottom: 1px solid #6c357a;
-  }
-  .historytable td {
-    display: block;
-    min-width: 0;
-    padding: 3px 2px;
-    border: 0;
-    white-space: normal;
-    overflow-wrap: anywhere;
-  }
-  .historytable td::before {
-    content: attr(data-label);
-    display: block;
-    margin-bottom: 5px;
-    color: #9f8cbb;
-    font: 8px/1.5 'Press Start 2P', monospace;
-    overflow-wrap: anywhere;
-  }
-  .round-cell { font-size: 12px; }
-  .history-pact { white-space: normal; gap: 5px; flex-wrap: wrap; }
-  .history-pact-emoji { font-size: 23px; }
-  .history-participant { gap: 5px; }
-  .history-move { white-space: normal; gap: 5px; flex-wrap: wrap; }
-  .history-move-emoji { font-size: 22px; }
-  .history-move-label { font-size: 10px; }
-  .decision-pill { max-width: 100%; white-space: normal; gap: 4px; padding: 3px 4px; font-size: 9px; overflow-wrap: anywhere; }
-  .decision-pill-emoji { font-size: 15px; }
-  .points-cell { grid-column: 1 / -1; text-align: left; font-size: 10px; }
-  .bottom { gap: 10px; }
-  .bottom-buttons { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-  .bottom-buttons .arcade { min-width: 0; width: 100%; padding: 11px 5px; font-size: clamp(7px, 2.1vw, 9px); line-height: 1.7; white-space: normal; overflow-wrap: anywhere; }
-  .hint { font-size: 12px; }
-  #integrationPanel { padding: 10px; font-size: 11px; }
-  #integrationDetails { font-size: 11px; }
-  .sponsors { left: 12px; right: 12px; font-size: 14px; }
-  .dot { width: 13px; height: 13px; }
-  .dots { gap: 6px; }
-  .name-dialog { padding: 14px; }
-  .name-actions .arcade { width: 100%; }
-  .guess-panel { padding: 10px; }
-  .guess-options { flex-direction: column; }
-  .guess-options .arcade { width: 100%; font-size: clamp(8px, 2.4vw, 10px); }
-}
+.name-title { font: 14px 'Press Start 2P', monospace; color: var(--yellow); line-height: 1.8; margin-bottom
