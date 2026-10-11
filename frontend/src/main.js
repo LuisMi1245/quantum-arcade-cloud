@@ -32,6 +32,40 @@ if (!sessionId) {
   sessionStorage.setItem('qaSessionId', sessionId);
 }
 
+// --- Nombre del jugador: vive en sessionStorage, igual que el id de sesión. ---
+const NAME_KEY = 'qaPlayerName';
+const DEFAULT_PLAYER_NAME = 'PLAYER 1';
+const MAX_NAME_LENGTH = 12;
+let nameModalMode = 'start';
+
+function sanitizeName(raw) {
+  return String(raw ?? '')
+    .replace(/[^\p{L}\p{N} _-]/gu, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, MAX_NAME_LENGTH);
+}
+
+function loadPlayerName() {
+  try { return sanitizeName(sessionStorage.getItem(NAME_KEY)); } catch (_) { return ''; }
+}
+
+function savePlayerName(name) {
+  try { sessionStorage.setItem(NAME_KEY, name); } catch (_) { /* sin almacenamiento: dura mientras la página siga abierta */ }
+}
+
+let playerName = loadPlayerName();
+
+function displayName() {
+  return (playerName || DEFAULT_PLAYER_NAME).toUpperCase();
+}
+
+function escapeHtml(value) {
+  return String(value).replace(/[&<>"']/g, (char) => (
+    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]
+  ));
+}
+
 let gameState = null;
 let roundBusy = false;
 let guessBusy = false;
@@ -58,6 +92,44 @@ function setIntegrationStatus(message) {
 function setIntegrationDetails(message) {
   const node = $('integrationDetails');
   if (node) node.textContent = message;
+}
+
+function applyPlayerName() {
+  const name = displayName();
+  ['playerNameHead', 'playerNameSection', 'playerNameStatus', 'playerNameTh'].forEach((id) => {
+    const node = $(id);
+    if (node) node.textContent = name;
+  });
+  const chip = $('introPlayer');
+  if (chip) chip.hidden = !playerName;
+  const chipName = $('introPlayerName');
+  if (chipName) chipName.textContent = name;
+  // Si ya hay una partida en pantalla, refresca marcador, historial y pantalla final.
+  if (gameState) renderState(gameState);
+}
+
+function openNameModal(mode) {
+  nameModalMode = mode;
+  const input = $('nameInput');
+  input.value = playerName;
+  $('nameTitle').textContent = mode === 'start' ? 'NUEVO JUGADOR' : 'CAMBIAR NOMBRE';
+  $('nameConfirm').textContent = mode === 'start' ? 'JUGAR ▶' : 'GUARDAR';
+  $('nameModal').hidden = false;
+  input.focus();
+  input.select();
+}
+
+function closeNameModal() {
+  $('nameModal').hidden = true;
+  $((nameModalMode === 'start') ? 'start' : 'changeName')?.focus();
+}
+
+function confirmName() {
+  playerName = sanitizeName($('nameInput').value) || DEFAULT_PLAYER_NAME;
+  savePlayerName(playerName);
+  $('nameModal').hidden = true;
+  applyPlayerName();
+  if (nameModalMode === 'start') startNewGame();
 }
 
 function setScreen(id) {
@@ -194,7 +266,7 @@ function renderHistory(state) {
     return `<tr>
       <td class="round-cell" data-label="RONDA">${String(roundNumber).padStart(2, '0')}</td>
       <td data-label="PACTO"><div class="history-pact"><span class="history-pact-emoji">${pactEmoji}</span><span>${pactLabel}</span></div></td>
-      <td data-label="PLAYER 1">${historyParticipantCell(row.player_move, playerDecision)}</td>
+      <td data-label="${escapeHtml(displayName())}">${historyParticipantCell(row.player_move, playerDecision)}</td>
       <td data-label="Q-BOT">${historyParticipantCell(row.machine_move, botDecision)}</td>
       <td class="points-cell" data-label="PUNTOS J / Q"><span>${playerPoints}</span><i>/</i><span>${machinePoints}</span></td>
     </tr>`;
@@ -221,12 +293,12 @@ function updateEnding(state) {
   if (awaitingGuess) {
     // Las 15 rondas terminaron, pero el resultado final depende del bono de +15 puntos.
     $('endtitle').innerHTML = `${completed} ROUNDS COMPLETE<br>GUESS Q-BOT!`;
-    $('endscore').innerHTML = `PLAYER 1: ${playerScore}<br>Q-BOT: ${botScore}<br><small>ADIVINA LA PERSONALIDAD PARA EL BONO FINAL</small>`;
+    $('endscore').innerHTML = `${escapeHtml(displayName())}: ${playerScore}<br>Q-BOT: ${botScore}<br><small>ADIVINA LA PERSONALIDAD PARA EL BONO FINAL</small>`;
   } else {
     const title = playerScore > botScore ? 'CONGRATULATIONS!<br>YOU WIN!'
       : playerScore < botScore ? 'BETTER LUCK<br>NEXT TIME' : 'IT\'S A TIE!<br>GOOD GAME!';
     $('endtitle').innerHTML = title;
-    $('endscore').innerHTML = `PLAYER 1: ${playerScore}<br>Q-BOT: ${botScore}<br><small>${completed} ROUNDS COMPLETE</small>`;
+    $('endscore').innerHTML = `${escapeHtml(displayName())}: ${playerScore}<br>Q-BOT: ${botScore}<br><small>${completed} ROUNDS COMPLETE</small>`;
   }
   renderGuessPanel(state);
 }
@@ -645,7 +717,18 @@ function returnToIntro() {
   setScreen('intro');
 }
 
-$('start').addEventListener('click', startNewGame);
+// START pide el nombre solo la primera vez de la sesión; después se reutiliza.
+$('start').addEventListener('click', () => {
+  if (playerName) startNewGame();
+  else openNameModal('start');
+});
+$('changeName').addEventListener('click', () => openNameModal('rename'));
+$('nameForm').addEventListener('submit', (event) => { event.preventDefault(); confirmName(); });
+$('nameCancel').addEventListener('click', closeNameModal);
+$('nameModal').addEventListener('click', (event) => { if (event.target === $('nameModal')) closeNameModal(); });
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape' && !$('nameModal').hidden) closeNameModal();
+});
 document.querySelectorAll('[data-personality]').forEach((button) => {
   button.addEventListener('click', () => submitPersonalityGuess(button.dataset.personality));
 });
@@ -682,4 +765,5 @@ async function boot() {
 }
 
 setMoveProbabilities(null);
+applyPlayerName();
 boot();

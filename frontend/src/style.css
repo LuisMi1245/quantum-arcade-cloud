@@ -474,6 +474,23 @@ h1, h2, .pixel {
 .endtitle { font-size: clamp(21px, 4.8vw, 52px); text-shadow: 5px 5px #4a2458, 8px 8px #070510; }
 .endscore { color: var(--cyan); font-size: 19px; line-height: 2; margin-bottom: 10px; }
 
+/* Nombre del jugador (modal + chip de la intro) */
+.intro-player { margin: 0 0 18px; font-size: 16px; color: var(--cyan); }
+.intro-player b { color: var(--yellow); }
+.linkbtn { background: none; border: 0; padding: 4px 6px; margin-left: 6px; color: var(--pink); font: 10px 'Press Start 2P', monospace; text-decoration: underline; }
+.name-modal { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; padding: 16px; background: rgba(7, 5, 16, .82); }
+.name-modal[hidden] { display: none; }
+.name-dialog { width: min(460px, 100%); padding: 20px; border: 4px solid var(--pink); background: #1a1034; box-shadow: 8px 8px #070510; text-align: center; }
+.name-title { font: 14px 'Press Start 2P', monospace; color: var(--yellow); line-height: 1.8; margin-bottom: 14px; }
+.name-label { display: block; font-size: 15px; margin-bottom: 10px; }
+.name-input { width: 100%; padding: 14px; border: 3px solid var(--cyan); background: #100b26; color: var(--cream); font: 16px 'Press Start 2P', monospace; text-align: center; text-transform: uppercase; }
+.name-input:focus-visible { outline: 3px solid white; }
+.name-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 18px; }
+.name-actions .arcade { font-size: 11px; padding: 14px 16px; }
+.arcade.secondary { background: #73529b; color: var(--cream); box-shadow: 0 7px #3d2a57, 0 10px #070510; }
+#playerNameHead { display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#playerNameTh { max-width: 90px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
 /* Adivinanza final de la personalidad de Q-BOT */
 .guess-panel {
   width: min(700px, 92vw);
@@ -625,6 +642,8 @@ h1, h2, .pixel {
   .sponsors { left: 12px; right: 12px; font-size: 14px; }
   .dot { width: 13px; height: 13px; }
   .dots { gap: 6px; }
+  .name-dialog { padding: 14px; }
+  .name-actions .arcade { width: 100%; }
   .guess-panel { padding: 10px; }
   .guess-options { flex-direction: column; }
   .guess-options .arcade { width: 100%; font-size: clamp(8px, 2.4vw, 10px); }

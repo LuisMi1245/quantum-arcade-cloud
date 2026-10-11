@@ -16,6 +16,10 @@
         <div class="iconcard">✌</div>
       </div>
       <p class="sub">Make your move, test your luck</p>
+      <div class="intro-player" id="introPlayer" hidden>
+        JUGADOR: <b id="introPlayerName"></b>
+        <button class="linkbtn" id="changeName" type="button">CAMBIAR NOMBRE</button>
+      </div>
       <button class="arcade" id="start" type="button">START ▶</button>
     </div>
     <div class="sponsors"><span>◉ Qiskit</span><span>⬡ IONQ</span></div>
@@ -25,7 +29,7 @@
     <header class="head">
       <div class="player">
         <div class="avatar">🧑🏻‍🚀</div>
-        <div><strong>PLAYER 1</strong><div class="score">Score: <b id="ps">0</b></div></div>
+        <div><strong id="playerNameHead">PLAYER 1</strong><div class="score">Score: <b id="ps">0</b></div></div>
       </div>
       <h1 class="game-title">VS</h1>
       <div class="player bot">
@@ -53,7 +57,7 @@
 
     <div class="grid">
       <section>
-        <h2 class="section"><span class="cyan">01A /</span> PLAYER 1 CHARACTER</h2>
+        <h2 class="section"><span class="cyan">01A /</span> <span id="playerNameSection">PLAYER 1</span> CHARACTER</h2>
         <div class="frame playerframe">
           <div class="moves">
             <div><button class="move" data-m="rock" type="button" aria-label="Elegir piedra">✊</button><div class="move-label">ROCK</div></div>
@@ -72,7 +76,7 @@
             <div class="pct" id="pt">33%</div>
           </div>
           <div class="playerstatus">
-            <div class="status-title">PLAYER 1</div>
+            <div class="status-title" id="playerNameStatus">PLAYER 1</div>
             <div class="decision-summary unknown" id="playerDecisionCard" aria-live="polite">
               <div class="decision-line"><span id="playerDecisionEmoji" class="decision-emoji">⏳</span><span id="playerDecisionLabel">EN ESPERA</span></div>
               <div class="decision-move"><span id="playerMoveEmoji" class="decision-move-emoji">—</span><span id="playerMoveLabel">SIN JUGADA</span></div>
@@ -103,7 +107,7 @@
               <tr>
                 <th>RND</th>
                 <th>PACTO</th>
-                <th>PLAYER 1</th>
+                <th id="playerNameTh">PLAYER 1</th>
                 <th>Q-BOT</th>
                 <th>PTS J/M</th>
               </tr>
@@ -155,6 +159,18 @@
 
     <button class="arcade" id="restart" type="button">RESTART ▶</button>
   </section>
+
+  <div class="name-modal" id="nameModal" role="dialog" aria-modal="true" aria-labelledby="nameTitle" hidden>
+    <form class="name-dialog" id="nameForm" autocomplete="off">
+      <div class="name-title" id="nameTitle">NUEVO JUGADOR</div>
+      <label class="name-label" for="nameInput">¿Cómo te llamas? (máx. 12 caracteres)</label>
+      <input id="nameInput" class="name-input" type="text" maxlength="12" placeholder="PLAYER 1" spellcheck="false">
+      <div class="name-actions">
+        <button class="arcade" id="nameConfirm" type="submit">JUGAR ▶</button>
+        <button class="arcade secondary" id="nameCancel" type="button">CANCELAR</button>
+      </div>
+    </form>
+  </div>
 
   <script type="module" src="/src/main.js"></script>
 </body>
