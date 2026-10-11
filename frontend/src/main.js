@@ -69,6 +69,8 @@ function escapeHtml(value) {
 let gameState = null;
 let roundBusy = false;
 let guessBusy = false;
+let endSoundPlayed = false;
+let endBus = null;
 let audioContext = null;
 let cameraStream = null;
 let handLandmarker = null;
@@ -170,6 +172,94 @@ function playRoundSound() {
   gain.connect(audioContext.destination);
   oscillator.start(now);
   oscillator.stop(now + 0.12);
+}
+
+// Ejecuta `callback` cuando el AudioContext está realmente activo (cubre navegadores que lo dejan suspendido).
+function withAudio(callback) {
+  unlockAudio();
+  if (!audioContext) return;
+  if (audioContext.state === 'running') {
+    callback(audioContext);
+  } else {
+    audioContext.resume()
+      .then(() => { if (audioContext.state === 'running') callback(audioContext); })
+      .catch(() => {});
+  }
+}
+
+function playTone(ctx, out, { freq, start, duration, type = 'square', volume = 0.05, glideTo = null, filterHz = null, vibrato = false }) {
+  const oscillator = ctx.createOscillator();
+  const gain = ctx.createGain();
+  oscillator.type = type;
+  oscillator.frequency.setValueAtTime(freq, start);
+  if (glideTo) oscillator.frequency.exponentialRampToValueAtTime(glideTo, start + duration);
+
+  // Ataque rápido, volumen sostenido y liberación suave (patrón ADSR estándar).
+  gain.gain.setValueAtTime(0.0001, start);
+  gain.gain.linearRampToValueAtTime(volume, start + 0.015);
+  gain.gain.setTargetAtTime(0.0001, start + Math.max(0.02, duration - 0.1), 0.025);
+
+  if (filterHz) {
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.value = filterHz;
+    oscillator.connect(filter);
+    filter.connect(gain);
+  } else {
+    oscillator.connect(gain);
+  }
+  gain.connect(out);
+
+  if (vibrato) {
+    const lfo = ctx.createOscillator();
+    const lfoDepth = ctx.createGain();
+    lfo.frequency.value = 5.5;
+    lfoDepth.gain.value = freq * 0.012;
+    lfo.connect(lfoDepth);
+    lfoDepth.connect(oscillator.frequency);
+    lfo.start(start);
+    lfo.stop(start + duration + 0.03);
+  }
+  oscillator.start(start);
+  oscillator.stop(start + duration + 0.03);
+}
+
+function stopEndSound() {
+  if (!endBus || !audioContext) { endBus = null; return; }
+  try {
+    endBus.gain.cancelScheduledValues(audioContext.currentTime);
+    endBus.gain.setTargetAtTime(0.0001, audioContext.currentTime, 0.03);
+  } catch (_) { /* el sonido ya terminó */ }
+  endBus = null;
+}
+
+// 'win' → fanfarria ascendente; 'lose' → "trombón triste" descendente; empate → silencio.
+function playEndSound(outcome) {
+  if (outcome !== 'win' && outcome !== 'lose') return;
+  withAudio((ctx) => {
+    stopEndSound();
+    const bus = ctx.createGain();
+    bus.gain.value = 1;
+    bus.connect(ctx.destination);
+    endBus = bus;
+    const t0 = ctx.currentTime + 0.05;
+
+    if (outcome === 'win') {
+      const chord = [523.25, 659.25, 783.99, 1046.5]; // Do mayor: C5 E5 G5 C6
+      chord.forEach((freq, i) => playTone(ctx, bus, { freq, start: t0 + i * 0.13, duration: 0.14, type: 'square', volume: 0.05 }));
+      const chordStart = t0 + 0.55;
+      chord.forEach((freq) => playTone(ctx, bus, { freq, start: chordStart, duration: 0.9, type: 'triangle', volume: 0.035 }));
+      playTone(ctx, bus, { freq: 1568, start: chordStart + 0.15, duration: 0.7, type: 'sine', volume: 0.02 });
+    } else {
+      [311.13, 293.66, 277.18].forEach((freq, i) => playTone(ctx, bus, {
+        freq, start: t0 + i * 0.42, duration: 0.38, type: 'sawtooth', volume: 0.05, filterHz: 900,
+      }));
+      playTone(ctx, bus, {
+        freq: 261.63, start: t0 + 3 * 0.42, duration: 1.1, type: 'sawtooth', volume: 0.055,
+        glideTo: 233.08, filterHz: 800, vibrato: true,
+      });
+    }
+  });
 }
 
 function moveKey(value) {
@@ -299,6 +389,10 @@ function updateEnding(state) {
       : playerScore < botScore ? 'BETTER LUCK<br>NEXT TIME' : 'IT\'S A TIE!<br>GOOD GAME!';
     $('endtitle').innerHTML = title;
     $('endscore').innerHTML = `${escapeHtml(displayName())}: ${playerScore}<br>Q-BOT: ${botScore}<br><small>${completed} ROUNDS COMPLETE</small>`;
+    if (!endSoundPlayed) {
+      endSoundPlayed = true;
+      playEndSound(playerScore > botScore ? 'win' : playerScore < botScore ? 'lose' : 'tie');
+    }
   }
   renderGuessPanel(state);
 }
@@ -463,6 +557,8 @@ async function startNewGame() {
   if (cameraOn || cameraStream) stopCamera();
   roundBusy = false;
   guessBusy = false;
+  endSoundPlayed = false;
+  stopEndSound();
   resetGuessPanel();
   gestureArmed = true;
   predictionHistory = [];
@@ -688,6 +784,8 @@ function returnToIntro() {
   gameState = null;
   roundBusy = false;
   guessBusy = false;
+  endSoundPlayed = false;
+  stopEndSound();
   resetGuessPanel();
   predictionHistory = [];
   setMoveProbabilities(null);
