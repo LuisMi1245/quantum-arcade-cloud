@@ -34,7 +34,6 @@
       </div>
     </header>
 
-    <!-- El pacto se conserva como bloque propio; no sustituye ni desplaza las tarjetas del juego. -->
     <section id="agreementPanel" class="agreement-panel" aria-live="polite">
       <div class="agreement-main">
         <div class="agreement-symbol" id="agreementEmoji">🎲</div>
@@ -72,7 +71,14 @@
             <div class="pct" id="pp">33%</div>
             <div class="pct" id="pt">33%</div>
           </div>
-          <div class="playerstatus">PLAYER 1<span id="state">READY</span></div>
+          <div class="playerstatus">
+            <div class="status-title">PLAYER 1</div>
+            <div class="decision-summary unknown" id="playerDecisionCard" aria-live="polite">
+              <div class="decision-line"><span id="playerDecisionEmoji" class="decision-emoji">⏳</span><span id="playerDecisionLabel">EN ESPERA</span></div>
+              <div class="decision-move"><span id="playerMoveEmoji" class="decision-move-emoji">—</span><span id="playerMoveLabel">SIN JUGADA</span></div>
+            </div>
+            <span id="state" class="system-state">READY</span>
+          </div>
         </div>
       </section>
 
@@ -81,6 +87,10 @@
         <div class="frame botframe">
           <div class="robot">🤖</div>
           <div class="botname">Q-BOT 3000</div>
+          <div class="decision-summary unknown bot-decision" id="botDecisionCard" aria-live="polite">
+            <div class="decision-line"><span id="botDecisionEmoji" class="decision-emoji">⏳</span><span id="botDecisionLabel">EN ESPERA</span></div>
+            <div class="decision-move"><span id="botMoveEmoji" class="decision-move-emoji">—</span><span id="botMoveLabel">SIN JUGADA</span></div>
+          </div>
           <div class="botstate" id="botstate">ACTIVE / THINKING</div>
         </div>
       </section>
@@ -89,7 +99,15 @@
         <h2 class="section"><span class="pink">04 /</span> ROUND HISTORY</h2>
         <div class="historyframe">
           <table class="historytable">
-            <thead><tr><th>ROUND</th><th>YOU vs Q-BOT</th><th>RESULT</th></tr></thead>
+            <thead>
+              <tr>
+                <th>RND</th>
+                <th>PACTO</th>
+                <th>PLAYER 1</th>
+                <th>Q-BOT</th>
+                <th>PTS J/M</th>
+              </tr>
+            </thead>
             <tbody id="hist"></tbody>
           </table>
         </div>

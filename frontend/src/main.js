@@ -9,11 +9,20 @@ const TOTAL_ROUNDS = 15;
 const MOVES = {
   rock: { label: 'ROCK', emoji: '✊', spanish: 'piedra' },
   paper: { label: 'PAPER', emoji: '✋', spanish: 'papel' },
-  scissors: { label: 'SCISSORS', emoji: '✌', spanish: 'tijeras' },
+  scissors: { label: 'SCISSORS', emoji: '✌️', spanish: 'tijeras' },
 };
 const SPANISH_TO_MOVE = { piedra: 'rock', papel: 'paper', tijeras: 'scissors', tijera: 'scissors' };
 const PERSONALITIES = { indiferente: 'INDIFERENTE', reciproco: 'RECÍPROCA', rencoroso: 'RENCOROSA' };
 const $ = (id) => document.getElementById(id);
+
+// Estos indicadores traducen los valores de estado enviados por el backend a
+// etiquetas consistentes, con un emoji visible en tarjetas e historial.
+const DECISIONS = {
+  cooperation: { label: 'COOPERACIÓN', emoji: '🤝', className: 'coop' },
+  betrayal: { label: 'TRAICIÓN', emoji: '⚔️', className: 'betray' },
+  neutral: { label: 'NO DECISORIA', emoji: '⚖️', className: 'neutral' },
+  unknown: { label: 'SIN CLASIFICAR', emoji: '❔', className: 'unknown' },
+};
 
 let sessionId = sessionStorage.getItem('qaSessionId');
 if (!sessionId) {
@@ -113,15 +122,79 @@ function winnerClass(winner, forBot = false) {
   return 'draw';
 }
 
+function decisionInfo(value) {
+  const normalized = String(value ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[_/-]+/g, ' ')
+    .trim();
+
+  if (normalized.includes('cooper') || normalized === 'coop' || normalized === 'cooperate') {
+    return DECISIONS.cooperation;
+  }
+  if (normalized.includes('traicion') || normalized.includes('betray') || normalized.includes('defect')) {
+    return DECISIONS.betrayal;
+  }
+  if (normalized.includes('neutral') || normalized.includes('no decisoria') || normalized.includes('indiferente') || normalized.includes('indifferent')) {
+    return DECISIONS.neutral;
+  }
+  return DECISIONS.unknown;
+}
+
+function recordDecision(row, participant) {
+  if (!row) return undefined;
+  const candidates = participant === 'player'
+    ? [row.player_state, row.player_decision, row.player_action, row.player_behavior, row.player_strategy]
+    : [row.machine_state, row.qbot_state, row.bot_state, row.machine_decision, row.machine_action, row.machine_behavior, row.machine_strategy];
+  return candidates.find((value) => value !== undefined && value !== null && String(value).trim() !== '');
+}
+
+function renderDecisionCard(participant, move, decision) {
+  const isBot = participant === 'bot';
+  const prefix = isBot ? 'bot' : 'player';
+  const info = decisionInfo(decision);
+  const key = moveKey(move);
+  const card = $(`${prefix}DecisionCard`);
+  if (card) {
+    card.classList.remove('coop', 'betray', 'neutral', 'unknown');
+    card.classList.add(info.className);
+  }
+  $(`${prefix}DecisionEmoji`).textContent = info.emoji;
+  $(`${prefix}DecisionLabel`).textContent = info.label;
+  $(`${prefix}MoveEmoji`).textContent = key ? MOVES[key].emoji : '—';
+  $(`${prefix}MoveLabel`).textContent = key ? MOVES[key].label : 'SIN JUGADA';
+}
+
+function historyParticipantCell(move, decision) {
+  const key = moveKey(move);
+  const info = decisionInfo(decision);
+  const emoji = key ? MOVES[key].emoji : '—';
+  const label = key ? MOVES[key].label : 'SIN JUGADA';
+  return `<div class="history-participant">
+    <div class="history-move"><span class="history-move-emoji">${emoji}</span><span class="history-move-label">${label}</span></div>
+    <div class="decision-pill ${info.className}"><span class="decision-pill-emoji">${info.emoji}</span><span>${info.label}</span></div>
+  </div>`;
+}
+
 function renderHistory(state) {
   const history = [...(state.history || [])].reverse();
-  $('hist').innerHTML = history.length ? history.map((row) => {
-    const playerMove = moveKey(row.player_move);
-    const botMove = moveKey(row.machine_move);
-    const resultLabel = row.winner === 'Gana jugador' ? 'YOU WIN'
-      : row.winner === 'Gana máquina' ? 'Q-Bot Wins' : 'DRAW';
-    const cls = winnerClass(row.winner);
-    return `<tr><td>ROUND ${String(row.round).padStart(2, '0')}</td><td>${playerMove ? MOVES[playerMove].emoji : '—'} vs ${botMove ? MOVES[botMove].emoji : '—'}</td><td class="${cls}">${resultLabel}</td></tr>`;
+  $('hist').innerHTML = history.length ? history.map((row, index) => {
+    const agreement = moveKey(row.agreement ?? row.pact ?? row.current_agreement);
+    const pactEmoji = agreement ? MOVES[agreement].emoji : '🎲';
+    const pactLabel = agreement ? MOVES[agreement].label : '—';
+    const playerDecision = recordDecision(row, 'player');
+    const botDecision = recordDecision(row, 'bot');
+    const roundNumber = Number(row.round ?? (history.length - index));
+    const playerPoints = row.player_points ?? row.player_score ?? '—';
+    const machinePoints = row.machine_points ?? row.machine_score ?? row.bot_points ?? '—';
+    return `<tr>
+      <td class="round-cell">${String(roundNumber).padStart(2, '0')}</td>
+      <td><div class="history-pact"><span class="history-pact-emoji">${pactEmoji}</span><span>${pactLabel}</span></div></td>
+      <td>${historyParticipantCell(row.player_move, playerDecision)}</td>
+      <td>${historyParticipantCell(row.machine_move, botDecision)}</td>
+      <td class="points-cell"><span>${playerPoints}</span><i>/</i><span>${machinePoints}</span></td>
+    </tr>`;
   }).join('') : '';
 
   const dotsFor = (forBot) => Array.from({ length: state.total_rounds || TOTAL_ROUNDS }, (_, i) => {
@@ -200,8 +273,10 @@ function renderState(state) {
   if (last) {
     const playerKey = moveKey(last.player_move);
     const botKey = moveKey(last.machine_move);
-    $('state').textContent = `${moveLabel(last.player_move)} / ${String(last.player_state || '').toUpperCase()}`;
-    $('botstate').textContent = `${String(last.machine_state || '').toUpperCase()} · ${moveLabel(last.machine_move)}`;
+    renderDecisionCard('player', last.player_move, recordDecision(last, 'player'));
+    renderDecisionCard('bot', last.machine_move, recordDecision(last, 'bot'));
+    $('state').textContent = `${playerKey ? MOVES[playerKey].label : 'JUGADA'} · REGISTRADA`;
+    $('botstate').textContent = 'ROUND RESOLVED';
     document.querySelectorAll('[data-m]').forEach((button) => {
       button.classList.toggle('selected', button.dataset.m === playerKey);
     });
@@ -210,6 +285,8 @@ function renderState(state) {
       `Jugada Q-BOT: ${botKey ? MOVES[botKey].label : '—'}. Puntos de la ronda: ${last.player_points} / ${last.machine_points}.`
     );
   } else {
+    renderDecisionCard('player', null, null);
+    renderDecisionCard('bot', null, null);
     $('state').textContent = 'READY';
     $('botstate').textContent = 'ACTIVE / THINKING';
     setIntegrationDetails(agreement
@@ -462,6 +539,8 @@ function returnToIntro() {
   $('bs').textContent = '0';
   $('state').textContent = 'READY';
   $('botstate').textContent = 'ACTIVE / THINKING';
+  renderDecisionCard('player', null, null);
+  renderDecisionCard('bot', null, null);
   $('roundlabel').textContent = 'ROUND 1 / 15 — Choose your move';
   renderAgreementPanel({ total_rounds: TOTAL_ROUNDS, round_number: 1, current_agreement: null, game_over: false });
   $('agreementName').textContent = 'PULSA START';
