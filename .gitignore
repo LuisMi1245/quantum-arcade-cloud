@@ -1,0 +1,8 @@
+**/node_modules/
+**/dist/
+**/.venv/
+**/venv/
+**/__pycache__/
+**/*.py[cod]
+frontend/.env.local
+backend/models/*.dill

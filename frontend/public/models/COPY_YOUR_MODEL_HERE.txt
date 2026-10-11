@@ -1,0 +1,4 @@
+Antes de desplegar, copia aquí el archivo hand_landmarker.task que ya tienes:
+frontend/public/models/hand_landmarker.task
+
+El modelo de MediaPipe es un recurso público que el navegador descarga desde Cloudflare Pages. No contiene imágenes de los jugadores.

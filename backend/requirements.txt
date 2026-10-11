@@ -1,0 +1,8 @@
+Flask==3.1.1
+gunicorn==23.0.0
+numpy==2.2.6
+qiskit==2.5.2
+qiskit-aer==0.17.2
+qiskit-machine-learning==0.9.1
+google-cloud-firestore>=2.21,<3
+dill>=0.3.8,<0.4

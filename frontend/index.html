@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#100b26">
+  <meta name="description" content="Quantum Arcade: acuerdos, teoría de juegos y un rival cuántico adaptativo.">
+  <title>Quantum Arcade</title>
+</head>
+<body>
+  <section id="intro" class="screen active">
+    <main class="intro-content">
+      <p class="eyebrow">QISKIT × QUANTUM GAME THEORY</p>
+      <h1 class="title">QUANTUM<br>ARCADE</h1>
+      <div class="shoot">THE THREE-SYMBOL PACT</div>
+      <div class="cards" aria-label="Piedra, papel y tijeras">
+        <div class="iconcard">✊</div><div class="iconcard">✋</div><div class="iconcard">✌</div>
+      </div>
+      <p class="sub">15 rondas. Acuerdos aleatorios. Una máquina cuántica con personalidad secreta.</p>
+      <div class="intro-rules">COOPERAR: iguala el acuerdo. TRAICIONAR: vence al acuerdo. NEUTRAL: pierde contra el acuerdo.</div>
+      <button class="arcade" id="start" type="button">START MATCH ▶</button>
+      <p class="small-note">La cámara se procesa en tu navegador. El vídeo no se envía al servidor.</p>
+    </main>
+    <div class="sponsors"><span>◉ QISKIT</span><span>⬡ IONQ</span><span>◈ QUANTUM ARCADE</span></div>
+  </section>
+
+  <section id="game" class="screen">
+    <header class="head">
+      <div class="player"><div class="avatar">🧑🏻‍🚀</div><div><strong>PLAYER 1</strong><div class="score">PTS: <b id="ps">0</b></div></div></div>
+      <h1 class="game-title">QUANTUM ARCADE</h1>
+      <div class="player bot"><div><strong>Q-BOT</strong><div class="score">PTS: <b id="bs">0</b></div></div><div class="avatar">🤖</div></div>
+    </header>
+
+    <section id="agreementPanel" class="agreement-panel" aria-live="polite">
+      <div class="agreement-main"><div class="agreement-symbol" id="agreementEmoji">🎲</div><div><div class="agreement-label">PACT / ACUERDO ACTUAL</div><div id="agreementName" class="agreement-name">PULSA START</div><div id="agreementRound" class="muted">Se sortea un acuerdo por ronda.</div></div></div>
+      <div class="agreement-actions" id="agreementActions">
+        <div class="action-chip coop"><strong>COOPERAR</strong><span>Igualar el acuerdo</span></div>
+        <div class="action-chip betray"><strong>TRAICIONAR</strong><span>Vencer al acuerdo</span></div>
+        <div class="action-chip neutral"><strong>NEUTRAL</strong><span>Perder ante el acuerdo</span></div>
+      </div>
+      <div class="scoring-note">PUNTOS: ambos cooperan +3 cada uno · ambos traicionan +1 cada uno · traición con ganador +5 al ganador · otras situaciones 0.</div>
+    </section>
+
+    <div class="grid">
+      <section class="panel">
+        <h2 class="section"><span class="cyan">01A /</span> PLAYER 1</h2>
+        <div class="frame playerframe">
+          <div class="camera-stage" id="cameraStage">
+            <video id="gestureVideo" autoplay playsinline muted aria-label="Vista de la cámara de Player 1"></video>
+            <canvas id="landmarkCanvas" aria-hidden="true"></canvas>
+            <div id="cameraPlaceholder">◎<br><span>CAMERA OFF</span><small>Activa la cámara o elige con el mouse.</small></div>
+            <div id="cameraBadge">LOCAL VISION</div>
+            <div id="cameraResult" aria-live="polite">ESPERANDO GESTO</div>
+          </div>
+          <div class="moves">
+            <button class="move" data-m="rock" type="button" aria-label="Elegir piedra">✊</button><div class="move-label">ROCK</div>
+            <button class="move" data-m="paper" type="button" aria-label="Elegir papel">✋</button><div class="move-label">PAPER</div>
+            <button class="move" data-m="scissors" type="button" aria-label="Elegir tijeras">✌</button><div class="move-label">SCISSORS</div>
+          </div>
+          <div class="playerstatus">PLAYER 1<span id="playerState">Elige una jugada</span></div>
+        </div>
+        <div class="camera-controls"><button class="arcade secondary" id="cameraToggle" type="button">CAMERA: OFF</button><span id="cameraStatus" role="status">Los controles manuales están disponibles.</span></div>
+      </section>
+
+      <section class="panel">
+        <h2 class="section"><span class="cyan">01B /</span> QUANTUM OPPONENT</h2>
+        <div class="frame botframe"><div class="robot">🤖</div><div class="botname">Q-BOT 3000</div><div class="botstate" id="botState">PERSONALIDAD SECRETA</div><div class="machine-move" id="machineMove">AWAITING MEASUREMENT</div><div class="measurement" id="measurementState">Medición: —</div><div class="status-pill" id="backendStatus">QISKIT BACKEND</div></div>
+        <div class="policy-box"><div class="section">Q-BOT POLICY</div><div class="policy-row"><span>Cooperación</span><div class="bar"><i id="pcBar"></i></div><b id="pcPct">33.3%</b></div><div class="policy-row"><span>Traición</span><div class="bar betrayal"><i id="ptBar"></i></div><b id="ptPct">33.3%</b></div><div class="policy-row"><span>No decisoria</span><div class="bar neutral"><i id="pnBar"></i></div><b id="pnPct">33.3%</b></div></div>
+      </section>
+
+      <section class="panel history-panel"><h2 class="section"><span class="pink">04 /</span> ROUND HISTORY</h2><div class="historyframe"><table class="historytable"><thead><tr><th>RND</th><th>PACTO</th><th>PLAYER</th><th>Q-BOT</th><th>PTS P/B</th></tr></thead><tbody id="historyBody"><tr><td colspan="5" class="empty-row">Todavía no hay rondas.</td></tr></tbody></table></div></section>
+    </div>
+
+    <section class="circuit-section"><div class="circuit-header"><h2 class="section"><span class="cyan">02 /</span> QUANTUM DECISION CIRCUIT</h2><span class="circuit-tag">2 QUBITS · 1 SHOT</span></div><p class="circuit-intro">La política actual se codifica como amplitudes. La medición devuelve un estado de dos bits: <b>|00⟩ = piedra</b>, <b>|01⟩ = papel</b>, <b>|10⟩ = tijeras</b>. En el modelo ideal, |11⟩ tiene amplitud cero.</p><div class="circuit-lines" aria-label="Esquema didáctico del circuito cuántico"><div class="wire"><span>q0</span><i class="gate">RY(φ/2)</i><i class="gate">●</i><i class="gate">RY(-φ/2)</i><i class="gate">●</i><b>M</b></div><div class="wire"><span>q1</span><i class="gate">RY(θ)</i><i class="gate">X</i><i class="gate">●</i><i class="gate">X</i><b>M</b></div></div><div class="circuit-note" id="circuitNote">El circuito se ejecutará en el backend de Python.</div></section>
+
+    <section class="stats-section"><h2 class="section">03 / STRATEGY HISTORY</h2><div class="statsframe"><div class="statsheading">PLAYER 1 · COOPERACIÓN / TRAICIÓN / NEUTRAL</div><div class="dots" id="playerDots"></div><div class="statsheading">Q-BOT · COOPERACIÓN / TRAICIÓN / NEUTRAL</div><div class="dots" id="botDots"></div></div></section>
+
+    <div class="bottom"><div class="hint" id="roundLabel">Ronda 1 / 15 — Elige una jugada</div><div class="bottom-actions"><button class="arcade secondary" id="vqcLab" type="button">VQC LAB ◈</button><button class="arcade secondary" id="newMatch" type="button">NEW MATCH</button></div></div>
+    <div id="notice" class="notice" role="status" aria-live="polite">Inicia la partida para comenzar.</div>
+  </section>
+
+  <section id="ending" class="screen ending-screen">
+    <div class="eyebrow">MATCH COMPLETE</div><h1 class="endtitle" id="endtitle">15 ROUNDS COMPLETE</h1><div class="endscore" id="endscore"></div>
+    <div class="guess-panel" id="guessPanel"><div class="guess-title">FINAL TEST / ADIVINA LA PERSONALIDAD</div><p>¿Qué estrategia siguió Q-BOT?</p><div class="guess-options"><button class="arcade" data-personality="indiferente" type="button">INDIFERENTE</button><button class="arcade" data-personality="reciproco" type="button">RECÍPROCA</button><button class="arcade" data-personality="rencoroso" type="button">RENCOROSA</button></div><div id="guessResult" role="status" aria-live="polite">Acierta y gana 15 puntos extra.</div></div><button class="arcade" id="restart" type="button">PLAY AGAIN ▶</button>
+  </section>
+
+  <div id="labModal" class="modal" hidden><div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="labTitle"><div class="modal-header"><h2 id="labTitle">VQC LAB / EXPLICACIÓN</h2><button class="arcade secondary" id="closeLab" type="button">CLOSE ✕</button></div><p>MediaPipe detecta 21 puntos de la mano en el navegador. A partir de ellos se calculan cinco ángulos en radianes. Esos cinco valores se envían al backend de Python, donde el VQC entrenado produce una etiqueta: piedra, papel o tijeras.</p><div class="lab-flow"><div>5 ángulos<br><small>Entrada clásica</small></div><span>→</span><div>ZZFeatureMap<br><small>Codificación</small></div><span>→</span><div>RealAmplitudes<br><small>Parámetros aprendidos</small></div><span>→</span><div>Predicción<br><small>3 clases</small></div></div><p class="muted">Este panel explica el flujo de inferencia. No representa una traza de ejecución puerta a puerta ni afirma que el VQC de gestos se ejecute en hardware cuántico remoto.</p></div></div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

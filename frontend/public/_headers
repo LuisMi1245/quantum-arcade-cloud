@@ -1,0 +1,5 @@
+/models/hand_landmarker.task
+  Cache-Control: public, max-age=604800, immutable
+
+/mediapipe/wasm/*
+  Cache-Control: public, max-age=604800, immutable
