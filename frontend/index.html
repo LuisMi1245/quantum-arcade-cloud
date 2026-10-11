@@ -4,12 +4,12 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#100b26">
-  <title>Quantum Finger Fights</title>
+  <title>Quantum Rock, Paper, Scissors</title>
 </head>
 <body>
   <section id="intro" class="screen active">
     <div>
-      <h1 class="title">QUANTUM FINGER FIGHTS<br><div class="shoot">Scissors & Paperweight in Prison!</div></h1>
+      <h1 class="title">QUANTUM ROCK, PAPER, SCISSORS<br><div class="shoot">In Prison!</div></h1>
       <div class="cards">
         <div class="iconcard">✊</div>
         <div class="iconcard">✋</div>
@@ -17,8 +17,8 @@
       </div>
       <p class="sub">Make your move, test your luck</p>
       <div class="intro-player" id="introPlayer" hidden>
-        PLAYER: <b id="introPlayerName"></b>
-        <button class="linkbtn" id="changeName" type="button">CHANGE NAME</button>
+        JUGADOR: <b id="introPlayerName"></b>
+        <button class="linkbtn" id="changeName" type="button">CAMBIAR NOMBRE</button>
       </div>
       <button class="arcade" id="start" type="button">START ▶</button>
     </div>
@@ -42,8 +42,8 @@
       <div class="agreement-main">
         <div class="agreement-symbol" id="agreementEmoji">🎲</div>
         <div class="agreement-copy">
-          <div class="agreement-label">CURRENT PACT / AGREEMENT</div>
-          <div id="agreementName" class="agreement-name">PRESS START</div>
+          <div class="agreement-label">PACT / ACUERDO ACTUAL</div>
+          <div id="agreementName" class="agreement-name">PULSA START</div>
           <div id="agreementRound" class="agreement-round">Se sortea un acuerdo por ronda.</div>
         </div>
       </div>
@@ -52,7 +52,7 @@
         <div class="action-chip betray"><strong>TRAICIONAR</strong><span>Vencer al acuerdo</span></div>
         <div class="action-chip neutral"><strong>NEUTRAL / NO DECISORIA</strong><span>Perder ante el acuerdo</span></div>
       </div>
-      <div class="scoring-note"><b>SCORE:</b> ambos cooperan: +3 cada uno · ambos traicionan: +1 cada uno · traición con victoria: +5 al ganador · demás situaciones: 0.</div>
+      <div class="scoring-note"><b>PUNTUACIÓN:</b> ambos cooperan: +3 cada uno · ambos traicionan: +1 cada uno · traición con victoria: +5 al ganador · demás situaciones: 0.</div>
     </section>
 
     <div class="grid">
@@ -74,6 +74,13 @@
             <div class="pct" id="pr">33%</div>
             <div class="pct" id="pp">33%</div>
             <div class="pct" id="pt">33%</div>
+          </div>
+          <div class="camera-cta" id="cameraCta" data-state="off">
+            <button class="arcade camera-btn" id="cameraToggle" type="button" aria-pressed="false" aria-describedby="cameraHint">
+              <span class="camera-btn-icon" id="cameraIcon" aria-hidden="true">📷</span>
+              <span id="cameraToggleLabel">ACTIVAR CÁMARA</span>
+            </button>
+            <div class="camera-hint" id="cameraHint" aria-live="polite">¡Juega con tu mano! Muestra ✊ ✋ o ✌ a la cámara. Tu vídeo se queda en tu navegador.</div>
           </div>
           <div class="playerstatus">
             <div class="status-title" id="playerNameStatus">PLAYER 1</div>
@@ -130,7 +137,7 @@
     <div class="bottom">
       <div class="hint" id="roundlabel">ROUND 1 / 15 — Choose your move</div>
       <div class="bottom-buttons">
-        <button class="arcade" id="cameraToggle" type="button">CAMERA: OFF</button>
+        <button class="arcade" id="rulesBtn" type="button" aria-haspopup="dialog">❓ CÓMO JUGAR</button>
         <button class="arcade" id="end" type="button">END GAME ▸</button>
       </div>
     </div>
@@ -160,14 +167,84 @@
     <button class="arcade" id="restart" type="button">RESTART ▶</button>
   </section>
 
+  <div class="rules-modal" id="rulesModal" role="dialog" aria-modal="true" aria-labelledby="rulesTitle" hidden>
+    <div class="rules-dialog" id="rulesDialog">
+      <header class="rules-head">
+        <div>
+          <div class="rules-title" id="rulesTitle">🎮 ¿CÓMO SE JUEGA?</div>
+          <div class="rules-sub">Piedra, papel o tijera… ¡pero con pactos, traiciones y un robot cuántico!</div>
+        </div>
+        <button class="rules-close" id="rulesClose" type="button" aria-label="Cerrar reglas">✕</button>
+      </header>
+
+      <div class="rules-body" id="rulesBody" tabindex="0">
+        <section class="rule-card r-cyan">
+          <h3><span class="rule-num">1</span>🎲 CADA RONDA HAY UN PACTO</h3>
+          <p>El juego sortea un símbolo: ✊ ✋ o ✌. Es el <b>pacto</b> entre tú y <span class="nb">Q-BOT</span>, y lo verás siempre en el panel de arriba.</p>
+        </section>
+
+        <section class="rule-card r-pink">
+          <h3><span class="rule-num">2</span>🤔 ¿CÓMO TRATAS EL PACTO?</h3>
+          <p>Tú decides, con tu jugada, si lo respetas o no:</p>
+          <div class="rule-chips">
+            <div class="rule-chip coop"><strong>🤝 COOPERAR</strong><span>Juegas el <b>mismo</b> símbolo del pacto.</span></div>
+            <div class="rule-chip betray"><strong>🗡️ TRAICIONAR</strong><span>Juegas el que <b>le gana</b> al pacto.</span></div>
+            <div class="rule-chip neutral"><strong>😴 NEUTRAL</strong><span>Juegas el que <b>pierde</b> ante el pacto (no decisoria).</span></div>
+          </div>
+          <div class="rule-example">💡 <b>Ejemplo:</b> si el pacto es ✊ → cooperas con ✊, traicionas con ✋ y te quedas neutral con ✌.</div>
+        </section>
+
+        <section class="rule-card r-yellow">
+          <h3><span class="rule-num">3</span>⚔️ ¡DUELO!</h3>
+          <p><span class="nb">Q-BOT</span> elige <b>a la vez que tú</b>, sin ver tu jugada. Después se resuelve un piedra-papel-tijera de toda la vida: ✊ gana a ✌, ✌ gana a ✋ y ✋ gana a ✊.</p>
+        </section>
+
+        <section class="rule-card r-green">
+          <h3><span class="rule-num">4</span>🏆 ¡A REPARTIR PUNTOS!</h3>
+          <div class="score-list">
+            <div class="score-row"><span>🤝 + 🤝 Los dos cooperan</span><b class="pts good">+3 c/u</b></div>
+            <div class="score-row"><span>🗡️ + 🗡️ Los dos traicionan</span><b class="pts mid">+1 c/u</b></div>
+            <div class="score-row"><span>💥 Hay traición y alguien gana el duelo</span><b class="pts big">+5 al ganador</b></div>
+            <div class="score-row"><span>🤷 Cualquier otro caso</span><b class="pts zero">0</b></div>
+          </div>
+        </section>
+
+        <section class="rule-card r-cyan">
+          <h3><span class="rule-num">5</span>🤖 <span class="nb">Q-BOT</span> TIENE PERSONALIDAD SECRETA</h3>
+          <p>Sus decisiones salen de un circuito cuántico de 2 qubits y cambian según cómo juegues. Hay tres tipos de rival:</p>
+          <div class="rule-chips">
+            <div class="rule-chip neutral"><strong>😐 INDIFERENTE</strong><span>Va a lo suyo: le da igual lo que hagas.</span></div>
+            <div class="rule-chip coop"><strong>🪞 RECÍPROCO</strong><span>Te devuelve el trato que le das.</span></div>
+            <div class="rule-chip betray"><strong>😤 RENCOROSO</strong><span>Perdona poco y se enfada con las traiciones.</span></div>
+          </div>
+          <div class="rule-example">🕵️ <b>Pista:</b> fíjate en el historial. Cómo reacciona <span class="nb">Q-BOT</span> a tus jugadas delata quién es.</div>
+        </section>
+
+        <section class="rule-card r-pink">
+          <h3><span class="rule-num">6</span>🏁 15 RONDAS Y BONO FINAL</h3>
+          <p>Al acabar las 15 rondas tendrás que <b>adivinar la personalidad de <span class="nb">Q-BOT</span></b>. ¡Si aciertas, ganas <b class="gold">+15 puntos</b>! Gana quien sume más.</p>
+        </section>
+
+        <section class="rule-card r-yellow">
+          <h3><span class="rule-num">7</span>📷 MANOS O BOTONES</h3>
+          <p>Toca ✊ ✋ ✌ en pantalla o pulsa <b>ACTIVAR CÁMARA</b> en la tarjeta del jugador y juega con la mano. Mantén el gesto quieto un instante y retira la mano para jugar la siguiente ronda.</p>
+        </section>
+      </div>
+
+      <footer class="rules-foot">
+        <button class="arcade" id="rulesOk" type="button">¡ENTENDIDO! ▶</button>
+      </footer>
+    </div>
+  </div>
+
   <div class="name-modal" id="nameModal" role="dialog" aria-modal="true" aria-labelledby="nameTitle" hidden>
     <form class="name-dialog" id="nameForm" autocomplete="off">
-      <div class="name-title" id="nameTitle">NEW PLAYER</div>
-      <label class="name-label" for="nameInput">¿What's your name? (máx. 12 characters)</label>
+      <div class="name-title" id="nameTitle">NUEVO JUGADOR</div>
+      <label class="name-label" for="nameInput">¿Cómo te llamas? (máx. 12 caracteres)</label>
       <input id="nameInput" class="name-input" type="text" maxlength="12" placeholder="PLAYER 1" spellcheck="false">
       <div class="name-actions">
-        <button class="arcade" id="nameConfirm" type="submit">PLAY ▶</button>
-        <button class="arcade secondary" id="nameCancel" type="button">CANCEL</button>
+        <button class="arcade" id="nameConfirm" type="submit">JUGAR ▶</button>
+        <button class="arcade secondary" id="nameCancel" type="button">CANCELAR</button>
       </div>
     </form>
   </div>
