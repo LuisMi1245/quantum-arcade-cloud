@@ -4,12 +4,12 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#100b26">
-  <title>Quantum Rock, Paper, Scissors</title>
+  <title>Quantum Finger Fights</title>
 </head>
 <body>
   <section id="intro" class="screen active">
     <div>
-      <h1 class="title">QUANTUM ROCK, PAPER, SCISSORS<br><div class="shoot">In Prison!</div></h1>
+      <h1 class="title">QUANTUM FINGER FIGHTS<br><div class="shoot">Scissors & Paperweight in Prison!</div></h1>
       <div class="cards">
         <div class="iconcard">✊</div>
         <div class="iconcard">✋</div>
@@ -18,7 +18,7 @@
       <p class="sub">Make your move, test your luck</p>
       <div class="intro-player" id="introPlayer" hidden>
         JUGADOR: <b id="introPlayerName"></b>
-        <button class="linkbtn" id="changeName" type="button">CAMBIAR NOMBRE</button>
+        <button class="linkbtn" id="changeName" type="button">CHANGE NAME</button>
       </div>
       <button class="arcade" id="start" type="button">START ▶</button>
       <div class="intro-status" id="introStatus" role="status" aria-live="polite" hidden></div>
@@ -44,7 +44,7 @@
         <div class="agreement-symbol" id="agreementEmoji">🎲</div>
         <div class="agreement-copy">
           <div class="agreement-label">PACT / ACUERDO ACTUAL</div>
-          <div id="agreementName" class="agreement-name">PULSA START</div>
+          <div id="agreementName" class="agreement-name">PRESS START</div>
           <div id="agreementRound" class="agreement-round">Se sortea un acuerdo por ronda.</div>
         </div>
       </div>
@@ -240,12 +240,12 @@
 
   <div class="name-modal" id="nameModal" role="dialog" aria-modal="true" aria-labelledby="nameTitle" hidden>
     <form class="name-dialog" id="nameForm" autocomplete="off">
-      <div class="name-title" id="nameTitle">NUEVO JUGADOR</div>
-      <label class="name-label" for="nameInput">¿Cómo te llamas? (máx. 12 caracteres)</label>
+      <div class="name-title" id="nameTitle">NEW PLAYER</div>
+      <label class="name-label" for="nameInput">¿What's your name? (máx. 12 characters)</label>
       <input id="nameInput" class="name-input" type="text" maxlength="12" placeholder="PLAYER 1" spellcheck="false">
       <div class="name-actions">
-        <button class="arcade" id="nameConfirm" type="submit">JUGAR ▶</button>
-        <button class="arcade secondary" id="nameCancel" type="button">CANCELAR</button>
+        <button class="arcade" id="nameConfirm" type="submit">PLAY ▶</button>
+        <button class="arcade secondary" id="nameCancel" type="button">CANCEL</button>
       </div>
     </form>
   </div>
