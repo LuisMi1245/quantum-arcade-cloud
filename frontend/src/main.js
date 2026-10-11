@@ -134,6 +134,54 @@ function confirmName() {
   if (nameModalMode === 'start') startNewGame();
 }
 
+// --- Botón de cámara (integrado en la tarjeta del jugador) ---
+const CAMERA_UI = {
+  off: { icon: '📷', label: 'ACTIVAR CÁMARA', hint: '¡Juega con tu mano! Muestra ✊ ✋ o ✌ a la cámara. Tu vídeo se queda en tu navegador.' },
+  loading: { icon: '⏳', label: 'ABRIENDO CÁMARA…', hint: 'Acepta el permiso de cámara en tu navegador.' },
+  on: { icon: '🟢', label: 'CÁMARA ACTIVA', hint: 'Muestra tu jugada y mantenla quieta; retira la mano para la siguiente ronda. Toca el botón para apagarla.' },
+};
+
+function setCameraUi(state, hintOverride) {
+  const ui = CAMERA_UI[state] || CAMERA_UI.off;
+  $('cameraCta').dataset.state = state;
+  $('cameraIcon').textContent = ui.icon;
+  $('cameraToggleLabel').textContent = ui.label;
+  $('cameraHint').textContent = hintOverride || ui.hint;
+  $('cameraToggle').setAttribute('aria-pressed', String(state === 'on'));
+}
+
+// --- Diálogo de reglas ---
+let rulesReturnFocus = null;
+const rulesAreOpen = () => !$('rulesModal').hidden;
+
+function openRules() {
+  rulesReturnFocus = document.activeElement;
+  $('rulesModal').hidden = false;
+  document.body.classList.add('modal-open');
+  $('rulesBody').scrollTop = 0;
+  $('rulesClose').focus();
+}
+
+function closeRules() {
+  if (!rulesAreOpen()) return;
+  $('rulesModal').hidden = true;
+  document.body.classList.remove('modal-open');
+  // Si la mano sigue a la vista al cerrar, exige retirarla antes de poder jugar por gesto.
+  if (cameraOn) gestureArmed = false;
+  (rulesReturnFocus && rulesReturnFocus.isConnected ? rulesReturnFocus : $('rulesBtn')).focus();
+}
+
+function trapRulesFocus(event) {
+  if (!rulesAreOpen()) return;
+  if (event.key === 'Escape') { closeRules(); return; }
+  if (event.key !== 'Tab') return;
+  const items = [...$('rulesDialog').querySelectorAll('button, [tabindex="0"]')];
+  const first = items[0];
+  const last = items[items.length - 1];
+  if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+  else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+}
+
 function setScreen(id) {
   document.querySelectorAll('.screen').forEach((screen) => screen.classList.remove('active'));
   $(id).classList.add('active');
@@ -452,416 +500,3 @@ async function submitPersonalityGuess(guess) {
     guessBusy = false;
   }
 }
-
-function renderAgreementPanel(state) {
-  const total = state.total_rounds || TOTAL_ROUNDS;
-  const round = state.round_number || total;
-  const key = moveKey(state.current_agreement);
-  const emoji = $('agreementEmoji');
-  const name = $('agreementName');
-  const detail = $('agreementRound');
-  const actions = $('agreementActions');
-  if (!emoji || !name || !detail || !actions) return;
-
-  if (state.game_over || !key) {
-    emoji.textContent = '✓';
-    name.textContent = 'ACUERDOS COMPLETADOS';
-    detail.textContent = 'La partida terminó: ya no hay un pacto activo.';
-    actions.innerHTML = `
-      <div class="action-chip coop"><strong>COOPERAR</strong><span>Igualar el símbolo del pacto.</span></div>
-      <div class="action-chip betray"><strong>TRAICIONAR</strong><span>Elegir el símbolo que vence al pacto.</span></div>
-      <div class="action-chip neutral"><strong>NEUTRAL</strong><span>Elegir el símbolo que pierde contra el pacto.</span></div>`;
-    return;
-  }
-
-  const beatsAgreement = { rock: 'paper', paper: 'scissors', scissors: 'rock' };
-  const losesToAgreement = { rock: 'scissors', paper: 'rock', scissors: 'paper' };
-  const coop = MOVES[key];
-  const betray = MOVES[beatsAgreement[key]];
-  const neutral = MOVES[losesToAgreement[key]];
-  emoji.textContent = coop.emoji;
-  name.textContent = coop.label;
-  detail.textContent = `RONDA ${round}/${total} · pacto aleatorio válido para esta ronda`;
-  actions.innerHTML = `
-    <div class="action-chip coop"><strong>COOPERAR</strong><span>${coop.emoji} ${coop.label}<br>Igualar el acuerdo</span></div>
-    <div class="action-chip betray"><strong>TRAICIONAR</strong><span>${betray.emoji} ${betray.label}<br>Vencer al acuerdo</span></div>
-    <div class="action-chip neutral"><strong>NEUTRAL / NO DECISORIA</strong><span>${neutral.emoji} ${neutral.label}<br>Perder ante el acuerdo</span></div>`;
-}
-
-function renderState(state) {
-  gameState = state;
-  $('ps').textContent = state.scores?.player ?? 0;
-  $('bs').textContent = state.scores?.machine ?? 0;
-
-  const total = state.total_rounds || TOTAL_ROUNDS;
-  const agreement = state.current_agreement;
-  renderAgreementPanel(state);
-  if (state.game_over) {
-    $('roundlabel').textContent = `ROUND ${total} / ${total} — MATCH COMPLETE`;
-  } else {
-    const pactLabel = agreement ? moveLabel(agreement) : '—';
-    $('roundlabel').textContent = `ROUND ${state.round_number || 1} / ${total} — PACT: ${pactLabel} · Choose your move`;
-  }
-
-  const last = state.last_record;
-  if (last) {
-    const playerKey = moveKey(last.player_move);
-    const botKey = moveKey(last.machine_move);
-    renderDecisionCard('player', last.player_move, recordDecision(last, 'player'));
-    renderDecisionCard('bot', last.machine_move, recordDecision(last, 'bot'));
-    $('state').textContent = `${playerKey ? MOVES[playerKey].label : 'JUGADA'} · REGISTRADA`;
-    $('botstate').textContent = 'ROUND RESOLVED';
-    document.querySelectorAll('[data-m]').forEach((button) => {
-      button.classList.toggle('selected', button.dataset.m === playerKey);
-    });
-    setIntegrationDetails(
-      `Pacto de esta ronda: ${moveLabel(last.agreement)}. Última medición cuántica: |${last.quantum_measurement}⟩. ` +
-      `Jugada Q-BOT: ${botKey ? MOVES[botKey].label : '—'}. Puntos de la ronda: ${last.player_points} / ${last.machine_points}.`
-    );
-  } else {
-    renderDecisionCard('player', null, null);
-    renderDecisionCard('bot', null, null);
-    $('state').textContent = 'READY';
-    $('botstate').textContent = 'ACTIVE / THINKING';
-    setIntegrationDetails(agreement
-      ? `Acuerdo de la ronda actual: ${moveLabel(agreement)}. Retira la mano después de una jugada para habilitar la siguiente.`
-      : 'La cámara se procesa localmente. Los cinco ángulos se envían al backend para la clasificación VQC.');
-  }
-
-  renderHistory(state);
-  document.querySelectorAll('[data-m]').forEach((button) => {
-    button.disabled = Boolean(state.game_over) || roundBusy;
-  });
-
-  if (state.game_over) {
-    updateEnding(state);
-    setScreen('ending');
-    if (cameraOn) stopCamera();
-  }
-}
-
-function resetGuessPanel() {
-  const panel = $('guessPanel');
-  if (!panel) return;
-  panel.hidden = true;
-  panel.querySelectorAll('[data-personality]').forEach((button) => {
-    button.disabled = false;
-    button.classList.remove('picked');
-  });
-  const result = $('guessResult');
-  if (result) { result.className = 'guess-result'; result.textContent = ''; }
-}
-
-async function startNewGame() {
-  unlockAudio();
-  if (cameraOn || cameraStream) stopCamera();
-  roundBusy = false;
-  guessBusy = false;
-  endSoundPlayed = false;
-  stopEndSound();
-  resetGuessPanel();
-  gestureArmed = true;
-  predictionHistory = [];
-  predictionPending = false;
-  setMoveProbabilities(null);
-  document.querySelectorAll('[data-m]').forEach((button) => {
-    button.classList.remove('selected');
-    button.disabled = false;
-  });
-  try {
-    const result = await api('/api/game/reset', { session_id: sessionId });
-    renderState(result.state);
-    setScreen('game');
-    setIntegrationStatus(vqcAvailable
-      ? 'Gesture model: VQC loaded · Qiskit backend: connected.'
-      : 'Gesture model: unavailable · Qiskit backend: connected; manual play is available.');
-  } catch (error) {
-    setIntegrationStatus(`No se pudo iniciar la partida: ${error.message}`);
-    setIntegrationDetails('Comprueba la API de Cloud Run y vuelve a pulsar START.');
-  }
-}
-
-async function submitMove(move, source = 'buttons') {
-  if (!MOVES[move] || roundBusy || !gameState || gameState.game_over) return;
-  roundBusy = true;
-  gestureArmed = false;
-  document.querySelectorAll('[data-m]').forEach((button) => { button.disabled = true; });
-  $('state').textContent = source === 'camera' ? 'GESTURE CONFIRMED' : 'PROCESSING...';
-  $('botstate').textContent = 'ACTIVE / THINKING';
-  setIntegrationStatus(source === 'camera'
-    ? `VQC detected ${MOVES[move].label}; resolving quantum round…`
-    : 'Jugada manual confirmada; resolviendo la ronda cuántica…');
-
-  try {
-    const result = await api('/api/game/round', { session_id: sessionId, player_move: move });
-    playRoundSound();
-    setMoveProbabilities(move);
-    renderState(result.state);
-    const record = result.record;
-    if (!result.state.game_over) {
-      setIntegrationStatus(vqcAvailable
-        ? `Backend connected · VQC ready · Round ${record.round} complete.`
-        : `Backend connected · Round ${record.round} complete; manual play remains available.`);
-    }
-  } catch (error) {
-    setIntegrationStatus(`No se pudo resolver la ronda: ${error.message}`);
-    setIntegrationDetails('Puedes seguir utilizando los botones manuales cuando la conexión se restablezca.');
-  } finally {
-    roundBusy = false;
-    if (gameState) renderState(gameState);
-  }
-}
-
-function calculateAngle(p1, p2, p3) {
-  const v1 = [p1.x - p2.x, p1.y - p2.y, p1.z - p2.z];
-  const v2 = [p3.x - p2.x, p3.y - p2.y, p3.z - p2.z];
-  const dot = v1.reduce((sum, value, i) => sum + value * v2[i], 0);
-  const n1 = Math.hypot(...v1);
-  const n2 = Math.hypot(...v2);
-  if (n1 < 1e-9 || n2 < 1e-9) return 0;
-  return Math.acos(Math.max(-1, Math.min(1, dot / (n1 * n2))));
-}
-
-function extractAngles(landmarks) {
-  const triplets = [[1, 2, 3], [5, 6, 7], [9, 10, 11], [13, 14, 15], [17, 18, 19]];
-  return triplets.map(([a, b, c]) => calculateAngle(landmarks[a], landmarks[b], landmarks[c]));
-}
-
-function majorityPrediction() {
-  const counts = new Map();
-  predictionHistory.forEach((move) => counts.set(move, (counts.get(move) || 0) + 1));
-  let best = null;
-  let votes = 0;
-  for (const [move, count] of counts.entries()) {
-    if (count > votes) { best = move; votes = count; }
-  }
-  return { move: best, votes };
-}
-
-async function requestVqcPrediction(angles) {
-  predictionPending = true;
-  try {
-    const result = await api('/api/predict', { angles });
-    const move = result.gesture;
-    if (!MOVES[move]) throw new Error('El backend devolvió una clase inválida.');
-    setMoveProbabilities(move);
-    predictionHistory.push(move);
-    if (predictionHistory.length > 9) predictionHistory.shift();
-    const { move: stable, votes } = majorityPrediction();
-    if (stable && votes >= 5) {
-      $('state').textContent = `${MOVES[stable].label} · STABLE ${votes}/9`;
-    } else {
-      $('state').textContent = `${MOVES[move].label} · STABILIZING`;
-    }
-    setIntegrationStatus(`Camera active · VQC: ${MOVES[move].label} · ${predictionHistory.length}/9 votes collected.`);
-
-    if (stable && votes >= 5 && gestureArmed && $('game').classList.contains('active') && !roundBusy && !gameState?.game_over) {
-      gestureArmed = false;
-      await submitMove(stable, 'camera');
-    }
-  } catch (error) {
-    inferenceEnabled = false;
-    $('state').textContent = 'VQC ERROR';
-    setIntegrationStatus(`VQC request failed: ${error.message}. Use the manual buttons.`);
-    setIntegrationDetails('The camera remains local; only the five numerical angles are sent to the backend.');
-  } finally {
-    predictionPending = false;
-  }
-}
-
-function detectionLoop() {
-  if (!cameraOn || !handLandmarker) return;
-  const video = $('gestureVideo');
-  const now = performance.now();
-  if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA && video.currentTime !== lastVideoTime && now - lastDetectionAt >= 66) {
-    lastVideoTime = video.currentTime;
-    lastDetectionAt = now;
-    try {
-      const result = handLandmarker.detectForVideo(video, now);
-      const landmarks = result.landmarks?.[0] || null;
-      if (landmarks) {
-        noHandFrames = 0;
-        if (inferenceEnabled && !predictionPending && now - lastPredictionAt >= 200) {
-          lastPredictionAt = now;
-          requestVqcPrediction(extractAngles(landmarks));
-        }
-      } else {
-        noHandFrames += 1;
-        predictionHistory = [];
-        if (noHandFrames >= 8) gestureArmed = true;
-        $('state').textContent = 'NO HAND DETECTED';
-      }
-    } catch (error) {
-      setIntegrationStatus(`MediaPipe error: ${error.message}. Manual buttons remain available.`);
-    }
-  }
-  rafId = requestAnimationFrame(detectionLoop);
-}
-
-async function startCamera() {
-  if (!navigator.mediaDevices?.getUserMedia) {
-    setIntegrationStatus('This browser cannot access the camera here. Use HTTPS or the manual buttons.');
-    return;
-  }
-  $('cameraToggle').disabled = true;
-  setIntegrationStatus('Requesting camera permission…');
-  try {
-    cameraStream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } },
-      audio: false,
-    });
-    const video = $('gestureVideo');
-    video.srcObject = cameraStream;
-    video.style.display = 'block';
-    $('cameraStage').classList.add('camera-active');
-    await video.play();
-
-    setIntegrationStatus('Loading MediaPipe hand detector in the browser…');
-    const vision = await FilesetResolver.forVisionTasks(WASM_URL);
-    handLandmarker = await HandLandmarker.createFromOptions(vision, {
-      baseOptions: { modelAssetPath: MODEL_URL },
-      runningMode: 'VIDEO',
-      numHands: 1,
-      minHandDetectionConfidence: 0.5,
-      minHandPresenceConfidence: 0.5,
-      minTrackingConfidence: 0.5,
-    });
-
-    cameraOn = true;
-    inferenceEnabled = vqcAvailable;
-    $('cameraToggle').textContent = 'CAMERA: ON';
-    setIntegrationStatus(vqcAvailable
-      ? 'Camera active · VQC ready. Hold a gesture steady; remove your hand to play again.'
-      : 'Camera active, but the VQC is unavailable. You can still use the manual buttons.');
-    setIntegrationDetails('The video is processed in your browser. Only the five angles are sent to Cloud Run for VQC classification.');
-    lastVideoTime = -1;
-    lastDetectionAt = 0;
-    lastPredictionAt = 0;
-    predictionHistory = [];
-    predictionPending = false;
-    gestureArmed = true;
-    noHandFrames = 0;
-    cancelAnimationFrame(rafId);
-    rafId = requestAnimationFrame(detectionLoop);
-  } catch (error) {
-    stopCamera();
-    setIntegrationStatus(`Could not start camera/MediaPipe: ${error.message || error}.`);
-    setIntegrationDetails('Check camera permissions and make sure the model files were included in the frontend deployment.');
-  } finally {
-    $('cameraToggle').disabled = false;
-  }
-}
-
-function stopCamera() {
-  cameraOn = false;
-  cancelAnimationFrame(rafId);
-  rafId = 0;
-  if (cameraStream) cameraStream.getTracks().forEach((track) => track.stop());
-  cameraStream = null;
-  const video = $('gestureVideo');
-  if (video) {
-    video.pause();
-    video.srcObject = null;
-    video.style.display = 'none';
-  }
-  $('cameraStage')?.classList.remove('camera-active');
-  if (handLandmarker) {
-    try { handLandmarker.close(); } catch (_) { /* detector is already closed */ }
-  }
-  handLandmarker = null;
-  $('cameraToggle').textContent = 'CAMERA: OFF';
-  setIntegrationStatus(vqcAvailable
-    ? 'Camera off · VQC ready · manual buttons available.'
-    : 'Camera off · VQC unavailable · manual buttons available.');
-  predictionHistory = [];
-  predictionPending = false;
-  gestureArmed = true;
-  noHandFrames = 0;
-}
-
-function returnToIntro() {
-  if (cameraOn || cameraStream) stopCamera();
-  gameState = null;
-  roundBusy = false;
-  guessBusy = false;
-  endSoundPlayed = false;
-  stopEndSound();
-  resetGuessPanel();
-  predictionHistory = [];
-  setMoveProbabilities(null);
-  $('ps').textContent = '0';
-  $('bs').textContent = '0';
-  $('state').textContent = 'READY';
-  $('botstate').textContent = 'ACTIVE / THINKING';
-  renderDecisionCard('player', null, null);
-  renderDecisionCard('bot', null, null);
-  $('roundlabel').textContent = 'ROUND 1 / 15 — Choose your move';
-  renderAgreementPanel({ total_rounds: TOTAL_ROUNDS, round_number: 1, current_agreement: null, game_over: false });
-  $('agreementName').textContent = 'PULSA START';
-  $('agreementRound').textContent = 'Se sortea un acuerdo por ronda.';
-  $('agreementEmoji').textContent = '🎲';
-  $('agreementActions').innerHTML = '<div class="action-chip coop"><strong>COOPERAR</strong><span>Igualar el acuerdo</span></div><div class="action-chip betray"><strong>TRAICIONAR</strong><span>Vencer al acuerdo</span></div><div class="action-chip neutral"><strong>NEUTRAL / NO DECISORIA</strong><span>Perder ante el acuerdo</span></div>';
-  $('hist').innerHTML = '';
-  $('pdots').innerHTML = '';
-  $('bdots').innerHTML = '';
-  document.querySelectorAll('[data-m]').forEach((button) => {
-    button.classList.remove('selected');
-    button.disabled = false;
-  });
-  $('endtitle').innerHTML = 'CONGRATULATIONS!<br>YOU WIN!';
-  $('endscore').textContent = '';
-  setIntegrationStatus('Gesture model: not connected · Qiskit backend: demo mode');
-  setIntegrationDetails('La cámara se procesa localmente. Los ángulos se envían al backend para la clasificación VQC.');
-  setScreen('intro');
-}
-
-// START pide el nombre solo la primera vez de la sesión; después se reutiliza.
-$('start').addEventListener('click', () => {
-  if (playerName) startNewGame();
-  else openNameModal('start');
-});
-$('changeName').addEventListener('click', () => openNameModal('rename'));
-$('nameForm').addEventListener('submit', (event) => { event.preventDefault(); confirmName(); });
-$('nameCancel').addEventListener('click', closeNameModal);
-$('nameModal').addEventListener('click', (event) => { if (event.target === $('nameModal')) closeNameModal(); });
-document.addEventListener('keydown', (event) => {
-  if (event.key === 'Escape' && !$('nameModal').hidden) closeNameModal();
-});
-document.querySelectorAll('[data-personality]').forEach((button) => {
-  button.addEventListener('click', () => submitPersonalityGuess(button.dataset.personality));
-});
-$('restart').addEventListener('click', returnToIntro);
-document.querySelectorAll('[data-m]').forEach((button) => {
-  button.addEventListener('click', () => submitMove(button.dataset.m, 'buttons'));
-});
-$('cameraToggle').addEventListener('click', () => cameraOn ? stopCamera() : startCamera());
-$('end').addEventListener('click', () => {
-  if (!gameState) { setScreen('ending'); return; }
-  updateEnding(gameState);
-  if (cameraOn || cameraStream) stopCamera();
-  setScreen('ending');
-});
-window.addEventListener('beforeunload', stopCamera);
-
-async function boot() {
-  try {
-    const health = await api('/health', undefined, 'GET');
-    vqcAvailable = Boolean(health.vqc_loaded);
-    inferenceEnabled = vqcAvailable;
-    setIntegrationStatus(vqcAvailable
-      ? 'Gesture model: VQC loaded · Qiskit backend: connected.'
-      : 'Gesture model: not loaded · Qiskit backend: connected; manual play available.');
-    setIntegrationDetails(vqcAvailable
-      ? 'Ready. Enable the camera to recognize gestures or use the three manual buttons.'
-      : 'Add the trained .dill model to Cloud Run to enable camera classification.');
-  } catch (error) {
-    vqcAvailable = false;
-    inferenceEnabled = false;
-    setIntegrationStatus(`API offline: ${error.message}. Check VITE_API_BASE_URL in Cloudflare Pages.`);
-    setIntegrationDetails('The game requires the Cloud Run API; check the service URL and its availability.');
-  }
-}
-
-setMoveProbabilities(null);
-applyPlayerName();
-boot();
