@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="es">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -17,13 +17,13 @@
       </div>
       <p class="sub">Make your move, test your luck</p>
       <div class="intro-player" id="introPlayer" hidden>
-        JUGADOR: <b id="introPlayerName"></b>
+        PLAYER: <b id="introPlayerName"></b>
         <button class="linkbtn" id="changeName" type="button">CHANGE NAME</button>
       </div>
       <button class="arcade" id="start" type="button">START ▶</button>
       <div class="intro-status" id="introStatus" role="status" aria-live="polite" hidden></div>
     </div>
-    <div class="sponsors"><span>◉ Qiskit</span><span>⬡ IONQ</span></div>
+    <div class="sponsors"><span>◉ Qiskit</span><button class="credits-btn" data-open-credits type="button" aria-haspopup="dialog">★ CREDITS</button><span>⬡ IONQ</span></div>
   </section>
 
   <section id="game" class="screen">
@@ -43,17 +43,17 @@
       <div class="agreement-main">
         <div class="agreement-symbol" id="agreementEmoji">🎲</div>
         <div class="agreement-copy">
-          <div class="agreement-label">PACT / ACUERDO ACTUAL</div>
+          <div class="agreement-label">CURRENT PACT</div>
           <div id="agreementName" class="agreement-name">PRESS START</div>
-          <div id="agreementRound" class="agreement-round">Se sortea un acuerdo por ronda.</div>
+          <div id="agreementRound" class="agreement-round">One random pact is drawn each round.</div>
         </div>
       </div>
       <div class="agreement-actions" id="agreementActions">
-        <div class="action-chip coop"><strong>COOPERAR</strong><span>Igualar el acuerdo</span></div>
-        <div class="action-chip betray"><strong>TRAICIONAR</strong><span>Vencer al acuerdo</span></div>
-        <div class="action-chip neutral"><strong>NEUTRAL / NO DECISORIA</strong><span>Perder ante el acuerdo</span></div>
+        <div class="action-chip coop"><strong>COOPERATE</strong><span>Match the pact</span></div>
+        <div class="action-chip betray"><strong>BETRAY</strong><span>Beat the pact</span></div>
+        <div class="action-chip neutral"><strong>NEUTRAL</strong><span>Lose to the pact</span></div>
       </div>
-      <div class="scoring-note"><b>PUNTUACIÓN:</b> ambos cooperan: +3 cada uno · ambos traicionan: +1 cada uno · traición con victoria: +5 al ganador · demás situaciones: 0.</div>
+      <div class="scoring-note"><b>SCORING:</b> both cooperate: +3 each · both betray: +1 each · betrayal and win: +5 to the winner · anything else: 0.</div>
     </section>
 
     <div class="grid">
@@ -61,13 +61,13 @@
         <h2 class="section"><span class="cyan">01A /</span> <span id="playerNameSection">PLAYER 1</span> CHARACTER</h2>
         <div class="frame playerframe">
           <div class="moves">
-            <div><button class="move" data-m="rock" type="button" aria-label="Elegir piedra">✊</button><div class="move-label">ROCK</div></div>
-            <div><button class="move" data-m="paper" type="button" aria-label="Elegir papel">✋</button><div class="move-label">PAPER</div></div>
-            <div><button class="move" data-m="scissors" type="button" aria-label="Elegir tijeras">✌</button><div class="move-label">SCISSORS</div></div>
+            <div><button class="move" data-m="rock" type="button" aria-label="Choose rock">✊</button><div class="move-label">ROCK</div></div>
+            <div><button class="move" data-m="paper" type="button" aria-label="Choose paper">✋</button><div class="move-label">PAPER</div></div>
+            <div><button class="move" data-m="scissors" type="button" aria-label="Choose scissors">✌</button><div class="move-label">SCISSORS</div></div>
           </div>
           <div class="camera-stage" id="cameraStage">
             <div class="character-placeholder" aria-hidden="true">🧑🏻‍🚀</div>
-            <video id="gestureVideo" autoplay playsinline muted aria-label="Vista previa de la cámara"></video>
+            <video id="gestureVideo" autoplay playsinline muted aria-label="Camera preview"></video>
           </div>
           <div class="prob">
             <div class="cyan probability-mark">％</div>
@@ -79,15 +79,15 @@
           <div class="camera-cta" id="cameraCta" data-state="off">
             <button class="arcade camera-btn" id="cameraToggle" type="button" aria-pressed="false" aria-describedby="cameraHint">
               <span class="camera-btn-icon" id="cameraIcon" aria-hidden="true">📷</span>
-              <span id="cameraToggleLabel">ACTIVAR CÁMARA</span>
+              <span id="cameraToggleLabel">TURN ON CAMERA</span>
             </button>
-            <div class="camera-hint" id="cameraHint" aria-live="polite">¡Juega con tu mano! Muestra ✊ ✋ o ✌ a la cámara. Tu vídeo se queda en tu navegador.</div>
+            <div class="camera-hint" id="cameraHint" aria-live="polite">Play with your hand! Show ✊ ✋ or ✌ to the camera. Your video stays in your browser.</div>
           </div>
           <div class="playerstatus">
             <div class="status-title" id="playerNameStatus">PLAYER 1</div>
             <div class="decision-summary unknown" id="playerDecisionCard" aria-live="polite">
-              <div class="decision-line"><span id="playerDecisionEmoji" class="decision-emoji">⏳</span><span id="playerDecisionLabel">EN ESPERA</span></div>
-              <div class="decision-move"><span id="playerMoveEmoji" class="decision-move-emoji">—</span><span id="playerMoveLabel">SIN JUGADA</span></div>
+              <div class="decision-line"><span id="playerDecisionEmoji" class="decision-emoji">⏳</span><span id="playerDecisionLabel">WAITING</span></div>
+              <div class="decision-move"><span id="playerMoveEmoji" class="decision-move-emoji">—</span><span id="playerMoveLabel">NO MOVE</span></div>
             </div>
             <span id="state" class="system-state">READY</span>
           </div>
@@ -100,8 +100,8 @@
           <div class="robot">🤖</div>
           <div class="botname">Q-BOT 3000</div>
           <div class="decision-summary unknown bot-decision" id="botDecisionCard" aria-live="polite">
-            <div class="decision-line"><span id="botDecisionEmoji" class="decision-emoji">⏳</span><span id="botDecisionLabel">EN ESPERA</span></div>
-            <div class="decision-move"><span id="botMoveEmoji" class="decision-move-emoji">—</span><span id="botMoveLabel">SIN JUGADA</span></div>
+            <div class="decision-line"><span id="botDecisionEmoji" class="decision-emoji">⏳</span><span id="botDecisionLabel">WAITING</span></div>
+            <div class="decision-move"><span id="botMoveEmoji" class="decision-move-emoji">—</span><span id="botMoveLabel">NO MOVE</span></div>
           </div>
           <div class="botstate" id="botstate">ACTIVE / THINKING</div>
         </div>
@@ -114,10 +114,10 @@
             <thead>
               <tr>
                 <th>RND</th>
-                <th>PACTO</th>
+                <th>PACT</th>
                 <th id="playerNameTh">PLAYER 1</th>
                 <th>Q-BOT</th>
-                <th>PTS J/M</th>
+                <th>PTS P/Q</th>
               </tr>
             </thead>
             <tbody id="hist"></tbody>
@@ -130,15 +130,15 @@
       <h2 class="section">STATS</h2>
       <div class="statsframe">
         <div class="statsheading">RECENT PERFORMANCE:</div>
-        <div class="dots" id="pdots" aria-label="Rendimiento reciente del jugador"></div>
-        <div class="dots" id="bdots" aria-label="Rendimiento reciente de Q-Bot"></div>
+        <div class="dots" id="pdots" aria-label="Recent player performance"></div>
+        <div class="dots" id="bdots" aria-label="Recent Q-Bot performance"></div>
       </div>
     </section>
 
     <div class="bottom">
       <div class="hint" id="roundlabel">ROUND 1 / 15 — Choose your move</div>
       <div class="bottom-buttons">
-        <button class="arcade" id="rulesBtn" type="button" aria-haspopup="dialog">❓ CÓMO JUGAR</button>
+        <button class="arcade" id="rulesBtn" type="button" aria-haspopup="dialog">❓ HOW TO PLAY</button>
         <button class="arcade" id="end" type="button">END GAME ▸</button>
       </div>
     </div>
@@ -146,7 +146,11 @@
     <div id="integrationPanel">
       <b>INTEGRATION STATUS</b>
       <span id="integrationStatus">Gesture model: not connected · Qiskit backend: demo mode</span>
-      <div id="integrationDetails">La cámara se procesa localmente. Los ángulos se envían al backend para la clasificación VQC.</div>
+      <div id="integrationDetails">The camera is processed locally. The angles are sent to the backend for VQC classification.</div>
+    </div>
+
+    <div class="credits-footer">
+      <button class="credits-btn" data-open-credits type="button" aria-haspopup="dialog">★ CREDITS</button>
     </div>
   </section>
 
@@ -155,85 +159,136 @@
     <div class="endscore" id="endscore"></div>
 
     <div id="guessPanel" class="guess-panel" hidden>
-      <div class="guess-title">FINAL / ADIVINA LA PERSONALIDAD</div>
-      <p class="guess-question">¿Qué estrategia secreta utilizó Q-BOT? Acierta y gana <b>+15 puntos</b>.</p>
+      <div class="guess-title">FINAL / GUESS THE PERSONALITY</div>
+      <p class="guess-question">What secret strategy did Q-BOT use? Guess right and win <b>+15 points</b>.</p>
       <div class="guess-options">
-        <button class="arcade" type="button" data-personality="indiferente">INDIFERENTE</button>
-        <button class="arcade" type="button" data-personality="reciproco">RECÍPROCA</button>
-        <button class="arcade" type="button" data-personality="rencoroso">RENCOROSA</button>
+        <button class="arcade" type="button" data-personality="indiferente">INDIFFERENT</button>
+        <button class="arcade" type="button" data-personality="reciproco">RECIPROCAL</button>
+        <button class="arcade" type="button" data-personality="rencoroso">VENGEFUL</button>
       </div>
       <div id="guessResult" class="guess-result" aria-live="polite"></div>
     </div>
 
     <button class="arcade" id="restart" type="button">RESTART ▶</button>
+    <div class="credits-footer">
+      <button class="credits-btn" data-open-credits type="button" aria-haspopup="dialog">★ CREDITS</button>
+    </div>
   </section>
 
   <div class="rules-modal" id="rulesModal" role="dialog" aria-modal="true" aria-labelledby="rulesTitle" hidden>
     <div class="rules-dialog" id="rulesDialog">
       <header class="rules-head">
         <div>
-          <div class="rules-title" id="rulesTitle">🎮 ¿CÓMO SE JUEGA?</div>
-          <div class="rules-sub">Piedra, papel o tijera… ¡pero con pactos, traiciones y un robot cuántico!</div>
+          <div class="rules-title" id="rulesTitle">🎮 HOW TO PLAY</div>
+          <div class="rules-sub">Rock, paper, scissors… but with pacts, betrayals and a quantum robot!</div>
         </div>
-        <button class="rules-close" id="rulesClose" type="button" aria-label="Cerrar reglas">✕</button>
+        <button class="rules-close" id="rulesClose" type="button" aria-label="Close rules">✕</button>
       </header>
 
       <div class="rules-body" id="rulesBody" tabindex="0">
         <section class="rule-card r-cyan">
-          <h3><span class="rule-num">1</span>🎲 CADA RONDA HAY UN PACTO</h3>
-          <p>El juego sortea un símbolo: ✊ ✋ o ✌. Es el <b>pacto</b> entre tú y <span class="nb">Q-BOT</span>, y lo verás siempre en el panel de arriba.</p>
+          <h3><span class="rule-num">1</span>🎲 EVERY ROUND HAS A PACT</h3>
+          <p>The game picks one symbol: ✊ ✋ or ✌. It is the <b>pact</b> between you and <span class="nb">Q-BOT</span>. You can always see it in the top panel.</p>
         </section>
 
         <section class="rule-card r-pink">
-          <h3><span class="rule-num">2</span>🤔 ¿CÓMO TRATAS EL PACTO?</h3>
-          <p>Tú decides, con tu jugada, si lo respetas o no:</p>
+          <h3><span class="rule-num">2</span>🤔 HOW DO YOU TREAT THE PACT?</h3>
+          <p>With your move, you decide if you keep the pact or not:</p>
           <div class="rule-chips">
-            <div class="rule-chip coop"><strong>🤝 COOPERAR</strong><span>Juegas el <b>mismo</b> símbolo del pacto.</span></div>
-            <div class="rule-chip betray"><strong>🗡️ TRAICIONAR</strong><span>Juegas el que <b>le gana</b> al pacto.</span></div>
-            <div class="rule-chip neutral"><strong>😴 NEUTRAL</strong><span>Juegas el que <b>pierde</b> ante el pacto (no decisoria).</span></div>
+            <div class="rule-chip coop"><strong>🤝 COOPERATE</strong><span>Play the <b>same</b> symbol as the pact.</span></div>
+            <div class="rule-chip betray"><strong>🗡️ BETRAY</strong><span>Play the symbol that <b>beats</b> the pact.</span></div>
+            <div class="rule-chip neutral"><strong>😴 NEUTRAL</strong><span>Play the symbol that <b>loses</b> to the pact. It decides nothing.</span></div>
           </div>
-          <div class="rule-example">💡 <b>Ejemplo:</b> si el pacto es ✊ → cooperas con ✊, traicionas con ✋ y te quedas neutral con ✌.</div>
+          <div class="rule-example">💡 <b>Example:</b> if the pact is ✊ → you cooperate with ✊, you betray with ✋ and you stay neutral with ✌.</div>
         </section>
 
         <section class="rule-card r-yellow">
-          <h3><span class="rule-num">3</span>⚔️ ¡DUELO!</h3>
-          <p><span class="nb">Q-BOT</span> elige <b>a la vez que tú</b>, sin ver tu jugada. Después se resuelve un piedra-papel-tijera de toda la vida: ✊ gana a ✌, ✌ gana a ✋ y ✋ gana a ✊.</p>
+          <h3><span class="rule-num">3</span>⚔️ DUEL!</h3>
+          <p><span class="nb">Q-BOT</span> chooses <b>at the same time as you</b>, without seeing your move. Then a normal rock-paper-scissors duel decides the winner: ✊ beats ✌, ✌ beats ✋ and ✋ beats ✊.</p>
         </section>
 
         <section class="rule-card r-green">
-          <h3><span class="rule-num">4</span>🏆 ¡A REPARTIR PUNTOS!</h3>
+          <h3><span class="rule-num">4</span>🏆 TIME FOR POINTS!</h3>
           <div class="score-list">
-            <div class="score-row"><span>🤝 + 🤝 Los dos cooperan</span><b class="pts good">+3 c/u</b></div>
-            <div class="score-row"><span>🗡️ + 🗡️ Los dos traicionan</span><b class="pts mid">+1 c/u</b></div>
-            <div class="score-row"><span>💥 Hay traición y alguien gana el duelo</span><b class="pts big">+5 al ganador</b></div>
-            <div class="score-row"><span>🤷 Cualquier otro caso</span><b class="pts zero">0</b></div>
+            <div class="score-row"><span>🤝 + 🤝 Both cooperate</span><b class="pts good">+3 each</b></div>
+            <div class="score-row"><span>🗡️ + 🗡️ Both betray</span><b class="pts mid">+1 each</b></div>
+            <div class="score-row"><span>💥 Someone betrays and someone wins the duel</span><b class="pts big">+5 to the winner</b></div>
+            <div class="score-row"><span>🤷 Any other case</span><b class="pts zero">0</b></div>
           </div>
         </section>
 
         <section class="rule-card r-cyan">
-          <h3><span class="rule-num">5</span>🤖 <span class="nb">Q-BOT</span> TIENE PERSONALIDAD SECRETA</h3>
-          <p>Sus decisiones salen de un circuito cuántico de 2 qubits y cambian según cómo juegues. Hay tres tipos de rival:</p>
+          <h3><span class="rule-num">5</span>🤖 <span class="nb">Q-BOT</span> HAS A SECRET PERSONALITY</h3>
+          <p>Its decisions come from a 2-qubit quantum circuit and change depending on how you play. There are three types of rival:</p>
           <div class="rule-chips">
-            <div class="rule-chip neutral"><strong>😐 INDIFERENTE</strong><span>Va a lo suyo: le da igual lo que hagas.</span></div>
-            <div class="rule-chip coop"><strong>🪞 RECÍPROCO</strong><span>Te devuelve el trato que le das.</span></div>
-            <div class="rule-chip betray"><strong>😤 RENCOROSO</strong><span>Perdona poco y se enfada con las traiciones.</span></div>
+            <div class="rule-chip neutral"><strong>😐 INDIFFERENT</strong><span>Does its own thing: it does not care what you do.</span></div>
+            <div class="rule-chip coop"><strong>🪞 RECIPROCAL</strong><span>Gives you back the same treatment you give.</span></div>
+            <div class="rule-chip betray"><strong>😤 VENGEFUL</strong><span>Rarely forgives and gets angry at betrayals.</span></div>
           </div>
-          <div class="rule-example">🕵️ <b>Pista:</b> fíjate en el historial. Cómo reacciona <span class="nb">Q-BOT</span> a tus jugadas delata quién es.</div>
+          <div class="rule-example">🕵️ <b>Clue:</b> look at the history. How <span class="nb">Q-BOT</span> reacts to your moves shows who it is.</div>
         </section>
 
         <section class="rule-card r-pink">
-          <h3><span class="rule-num">6</span>🏁 15 RONDAS Y BONO FINAL</h3>
-          <p>Al acabar las 15 rondas tendrás que <b>adivinar la personalidad de <span class="nb">Q-BOT</span></b>. ¡Si aciertas, ganas <b class="gold">+15 puntos</b>! Gana quien sume más.</p>
+          <h3><span class="rule-num">6</span>🏁 15 ROUNDS AND A FINAL BONUS</h3>
+          <p>After 15 rounds, you must <b>guess the personality of <span class="nb">Q-BOT</span></b>. If you are right, you win <b class="gold">+15 points</b>! The player with more points wins.</p>
         </section>
 
         <section class="rule-card r-yellow">
-          <h3><span class="rule-num">7</span>📷 MANOS O BOTONES</h3>
-          <p>Toca ✊ ✋ ✌ en pantalla o pulsa <b>ACTIVAR CÁMARA</b> en la tarjeta del jugador y juega con la mano. Mantén el gesto quieto un instante y retira la mano para jugar la siguiente ronda.</p>
+          <h3><span class="rule-num">7</span>📷 HANDS OR BUTTONS</h3>
+          <p>Tap ✊ ✋ ✌ on the screen, or press <b>TURN ON CAMERA</b> in the player card and play with your hand. Hold the gesture still for a moment, then remove your hand to play the next round.</p>
         </section>
       </div>
 
       <footer class="rules-foot">
-        <button class="arcade" id="rulesOk" type="button">¡ENTENDIDO! ▶</button>
+        <button class="arcade" id="rulesOk" type="button">GOT IT! ▶</button>
+      </footer>
+    </div>
+  </div>
+
+  <div class="credits-modal" id="creditsModal" role="dialog" aria-modal="true" aria-labelledby="creditsTitle" hidden>
+    <div class="credits-dialog" id="creditsDialog">
+      <header class="rules-head credits-head">
+        <div>
+          <div class="rules-title" id="creditsTitle">★ CREDITS ★</div>
+          <div class="rules-sub">Meet the team behind the quantum fingers!</div>
+        </div>
+        <button class="rules-close" id="creditsClose" type="button" aria-label="Close credits">✕</button>
+      </header>
+
+      <div class="rules-body credits-body" id="creditsBody" tabindex="0">
+        <ul class="credits-team">
+          <li class="author a-cyan">
+            <div class="author-avatar" aria-hidden="true"><span class="author-slot">P1</span>🧪</div>
+            <div class="author-info">
+              <h3 class="author-name">Mario Galeano</h3>
+              <p class="author-role">Physicist and programmer</p>
+              <span class="author-uni">UPTC</span>
+            </div>
+          </li>
+          <li class="author a-yellow">
+            <div class="author-avatar" aria-hidden="true"><span class="author-slot">P2</span>⚛️</div>
+            <div class="author-info">
+              <h3 class="author-name">Luis Miguel Patiño</h3>
+              <p class="author-role">Physicist and programmer</p>
+              <span class="author-uni">UPTC</span>
+            </div>
+          </li>
+          <li class="author a-pink">
+            <div class="author-avatar" aria-hidden="true"><span class="author-slot">P3</span>🎨</div>
+            <div class="author-info">
+              <h3 class="author-name">Annis Valentina Rojas</h3>
+              <p class="author-role">Physicist, designer and programmer</p>
+              <span class="author-uni">UPTC</span>
+            </div>
+          </li>
+        </ul>
+
+        <p class="credits-support">⬡ This effort is supported by <b>Qollab</b> &amp; <b>IonQ</b>.</p>
+        <p class="credits-fun">Made with physics, code and a lot of qubits.</p>
+      </div>
+
+      <footer class="rules-foot">
+        <button class="arcade" id="creditsOk" type="button">NICE! ▶</button>
       </footer>
     </div>
   </div>
@@ -241,7 +296,7 @@
   <div class="name-modal" id="nameModal" role="dialog" aria-modal="true" aria-labelledby="nameTitle" hidden>
     <form class="name-dialog" id="nameForm" autocomplete="off">
       <div class="name-title" id="nameTitle">NEW PLAYER</div>
-      <label class="name-label" for="nameInput">¿What's your name? (máx. 12 characters)</label>
+      <label class="name-label" for="nameInput">What's your name? (max. 12 characters)</label>
       <input id="nameInput" class="name-input" type="text" maxlength="12" placeholder="PLAYER 1" spellcheck="false">
       <div class="name-actions">
         <button class="arcade" id="nameConfirm" type="submit">PLAY ▶</button>
