@@ -5,4 +5,4 @@ Consulta [`README_DEPLOY.md`](README_DEPLOY.md) para el procedimiento completo d
 - `frontend/`: Vite + MediaPipe en el navegador.
 - `backend/`: Flask + Qiskit Aer + VQC `.dill` + Firestore.
 
-Antes de desplegar copia `hand_landmarker.task` a `frontend/public/models/` y `vqc_piedra_papel_tijera_seed_0.dill` a `backend/models/`. Ambos modelos se omiten de este ZIP por no haber sido adjuntados en la conversación.
+Antes de desplegar se copia `hand_landmarker.task` a `frontend/public/models/` y `vqc_piedra_papel_tijera_seed_0.dill` a `backend/models/`.
