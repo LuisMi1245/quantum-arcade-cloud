@@ -5,12 +5,10 @@ Esta carpeta separa la aplicación en dos partes:
 - `frontend/`: HTML/CSS/JavaScript/Vite. MediaPipe se ejecuta en el navegador de cada jugador. La cámara nunca se transmite al servidor.
 - `backend/`: Flask en Cloud Run. Recibe únicamente cinco ángulos en radianes para que el VQC entrenado haga la clasificación y administra las partidas con el motor cuántico `QuantumPrisonersDilemma`.
 
-## Archivos que debes aportar tú
+## Archivos que deben estar presentes
 
-Este ZIP no puede incluir tus dos modelos, porque no fueron adjuntados como archivos a esta conversación:
-
-1. Copia tu modelo público de MediaPipe `hand_landmarker.task` a `frontend/public/models/hand_landmarker.task`.
-2. Copia tu modelo entrenado `vqc_piedra_papel_tijera_seed_0.dill` a `backend/models/vqc_piedra_papel_tijera_seed_0.dill`.
+1. Copia de modelo público de MediaPipe `hand_landmarker.task` a `frontend/public/models/hand_landmarker.task`.
+2. Copia de modelo entrenado VQC `vqc_piedra_papel_tijera_seed_0.dill` a `backend/models/vqc_piedra_papel_tijera_seed_0.dill`.
 
 El archivo `.task` se publicará junto al frontend (el límite individual de Cloudflare Pages es 25 MiB). El archivo `.dill` se incluirá en la imagen de Cloud Run desde tu ordenador, pero está excluido del GitHub mediante `.gitignore`: no lo subas a un repositorio público.
 
@@ -24,11 +22,11 @@ El archivo `.task` se publicará junto al frontend (el límite individual de Clo
 
 ## 1. Preparar los modelos
 
-Copia los dos modelos como se indica arriba. No renombres el `.dill`, salvo que también cambies `VQC_MODEL_PATH`.
+Se copia los dos modelos como se indica arriba. No renombrar el `.dill`, salvo que también se cambie `VQC_MODEL_PATH`.
 
-### Comprueba la compatibilidad del `.dill`
+### Comprobar la compatibilidad del `.dill`
 
-En el entorno donde entrenaste el VQC, ejecuta:
+En el entorno donde se entrenó el VQC, ejecutar:
 
 ```bash
 python -c "import qiskit, qiskit_machine_learning, qiskit_aer; print('qiskit', qiskit.__version__); print('qiskit-machine-learning', qiskit_machine_learning.__version__); print('qiskit-aer', qiskit_aer.__version__)"
@@ -38,7 +36,7 @@ El `requirements.txt` del backend fija versiones actuales compatibles con Qiskit
 
 ## 2. Probar el backend localmente (recomendado antes de desplegar)
 
-Abre una terminal en `backend/`.
+Se abre una terminal en `backend/`.
 
 ### Windows PowerShell
 
@@ -66,11 +64,11 @@ export ALLOWED_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
 python main.py
 ```
 
-Debe escuchar en `http://127.0.0.1:8080`. Abre otra terminal y prueba `http://127.0.0.1:8080/health`. Para poder probar la cámara/VQC, `vqc_loaded` debe ser `true`.
+Debe escuchar en `http://127.0.0.1:8080`. Se abre otra terminal y prueba `http://127.0.0.1:8080/health`. Para poder probar la cámara/VQC, `vqc_loaded` debe ser `true`.
 
 ## 3. Probar el frontend localmente
 
-En otra terminal, ve a `frontend/` y ejecuta:
+En otra terminal, ve a `frontend/` y se ejecuta:
 
 ```bash
 npm install
@@ -88,7 +86,7 @@ Ejecuta el desarrollo:
 npm run dev
 ```
 
-Abre la dirección local que muestre Vite (normalmente `http://localhost:5173`). Pulsa START, permite el uso de la cámara y prueba cada gesto. Si la cámara o el VQC no están disponibles, los botones manuales de piedra/papel/tijeras siguen presentes.
+Se abre la dirección local que muestre Vite (normalmente `http://localhost:5173`). Pulsa START, permite el uso de la cámara y prueba cada gesto. Si la cámara o el VQC no están disponibles, los botones manuales de piedra/papel/tijeras siguen presentes.
 
 El build script copia los WASM de `@mediapipe/tasks-vision` al directorio `public/mediapipe/wasm`, así que el sitio no depende de una CDN de MediaPipe durante su uso. El modelo se carga desde `/models/hand_landmarker.task`.
 
@@ -215,7 +213,6 @@ Si ya no necesitas los registros de partidas, puedes eliminar la base de Firesto
 
 ## Limitaciones honestas
 
-- No existe una garantía de disponibilidad continua con un plan gratuito.
 - Cloud Run puede escalar a cero y presentar un cold start.
 - La cámara solo funciona si el usuario concede permiso y el navegador soporta `getUserMedia`.
 - Si el `.dill` fue serializado con versiones incompatibles, el servicio permitirá jugar manualmente, pero la inferencia VQC no estará disponible hasta corregir las dependencias.
